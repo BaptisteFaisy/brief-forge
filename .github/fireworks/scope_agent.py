@@ -40,7 +40,13 @@ MAX_EXCERPT_LINES = 5
 MAX_TOKENS = 3_000
 TEMPERATURE = 0.1
 CALL_TIMEOUT_S = 90
-COMMENT_PREFIX = "_fireworks · agent de périmètre (MiniMax M3.1 Flash)_"
+COMMENT_PREFIX = "_fireworks · agent de périmètre (%s)_"
+
+
+def comment_prefix():
+    """Signature du compte rendu, backend réel nommé."""
+    return (backends.signature("agent de périmètre") if backends is not None
+            else COMMENT_PREFIX % "backend inconnu")
 MARKER = "<!-- automerge-scope sha=%s -->"
 LABEL_HUMAN = "intervention-humaine"
 PUCE = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+`?([^`\s]+)`?"
@@ -100,7 +106,7 @@ def comment(repo, pr, body):
     """Commente la PR ; best-effort, ne lève jamais."""
     try:
         subprocess.run(["gh", "pr", "comment", str(pr), "--repo", repo,
-                        "--body", COMMENT_PREFIX + "\n\n" + body],
+                        "--body", comment_prefix() + "\n\n" + body],
                        capture_output=True, text=True, timeout=60)
     except Exception as exc:                                   # noqa: BLE001
         log("commentaire impossible : %s" % exc)

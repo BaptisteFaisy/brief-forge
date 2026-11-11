@@ -58,13 +58,16 @@ MAX_HUNKS = 20
 HUNK_MAX_CHARS = 12_000
 MAX_ROUNDS = 10
 BUDGET_S = 240
-CALL_TIMEOUT_S = 90
-MAX_TOKENS = 8_000
-TEMPERATURE = 0.2
 LABEL_OK = "agent-conflit"
 LABEL_HUMAN = "intervention-humaine"
-COMMENT_PREFIX = "_fireworks · agent de conflit (MiniMax M3.1 Flash)_"
 REFUSED_PREFIXES = (".github/", ".mergify.yml")
+
+
+def comment_prefix():
+    """Signature du compte rendu : nomme le backend qui a vraiment répondu."""
+    if backends is None:
+        return "_fireworks · agent de conflit (backend inconnu)_"
+    return backends.signature("agent de conflit")
 
 
 class AgentError(Exception):
@@ -98,7 +101,7 @@ def comment(repo, pr, body):
     """Commente la PR ; best-effort, ne lève jamais."""
     try:
         proc = subprocess.run(["gh", "pr", "comment", str(pr), "--repo", repo,
-                               "--body", COMMENT_PREFIX + "\n\n" + body],
+                               "--body", comment_prefix() + "\n\n" + body],
                               capture_output=True, text=True, timeout=60)
         if proc.returncode != 0:
             log("commentaire refusé : %s" % proc.stderr.strip()[:150])
@@ -194,8 +197,7 @@ def fw_complete(api_url, key, model, messages):
         raise AgentError("module backends introuvable (lu sur origin/main)")
     try:
         return backends.complete(messages, api_url=api_url, key=key,
-                                 model=model, temperature=TEMPERATURE,
-                                 max_tokens=MAX_TOKENS, timeout=CALL_TIMEOUT_S)
+                                 model=model)
     except backends.AgentError as exc:
         raise AgentError(str(exc))
 

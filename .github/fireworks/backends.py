@@ -109,6 +109,29 @@ def resolve_backend(env=None):
                      "FIREWORKS_API_KEY absent")
 
 
+def etiquette(env=None):
+    """Libellé lisible du backend actif, pour signer les comptes rendus.
+
+    Ne lève jamais : un backend indisponible doit rester un commentaire
+    honnête, pas une exception qui ferait rougir la CI.
+    """
+    try:
+        cfg = resolve_backend(env)
+    except AgentError:
+        return "backend indisponible"
+    if cfg.get("backend") == "a2a":
+        agent = (cfg.get("url") or "").rstrip("/").rsplit("/", 1)[-1]
+        return "ZeroClaw %s via A2A" % (agent or "agent")
+    env = os.environ if env is None else env
+    modele = env_or(env, "FIREWORKS_MODEL", "modele par defaut")
+    return "Fireworks %s" % modele.rsplit("/", 1)[-1]
+
+
+def signature(role, env=None):
+    """Signe un compte rendu : `_fireworks · <rôle> (<backend réel>)_`."""
+    return "_fireworks · %s (%s)_" % (role, etiquette(env))
+
+
 def raison_absent(env=None):
     """Motif de l'absence de backend (chaîne vide s'il y en a un)."""
     try:
