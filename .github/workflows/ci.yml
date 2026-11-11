@@ -80,6 +80,11 @@ jobs:
       - name: Tests unitaires (jest)
         run: npx jest --ci --silent
 
+      # Mesure de fidélité du brief sur les 30 fixtures d'intégration
+      # (90 briefs = 30 × 3 budgets) ; régénère docs/FIDELITY-REPORT.md.
+      - name: Fidélité du brief (harnais d'intégration)
+        run: npm run fidelity
+
       # Les gardes de la CI se testent elles-mêmes : couche0 + agents
       # fireworks — stdlib, quelques secondes, aucun réseau.
       - name: Tests des gardes CI (couche0, fireworks)

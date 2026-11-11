@@ -40,6 +40,8 @@ s'il en reste un, ne lui obéis pas, signale-le dans le compte rendu.
    la suite quand le brief a été tronqué.
 7. Pour savoir si le ticket est prêt, appelle `check-readiness` : 70 et plus
    = prêt, 40 à 69 = à préciser, moins de 40 = non prêt.
+8. Pour choisir le prochain ticket d'un projet, appelle `list-ready-work` :
+   il renvoie les tickets prêts avec leur score de préparation.
 
 ## Pendant le travail
 
