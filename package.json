@@ -7,6 +7,7 @@
     "build": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
+    "fidelity": "jest test/integration/fidelity --silent=false",
     "lint": "tsc --noEmit"
   },
   "keywords": [
@@ -21,6 +22,7 @@
   "license": "MIT",
   "dependencies": {
     "@forge/api": "^8.5.0",
+    "@forge/bridge": "^3.5.0",
     "@forge/resolver": "^2.0.2",
     "@forge/sql": "^4.0.10",
     "@forge/storage": "^2.0.3",

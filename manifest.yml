@@ -9,45 +9,45 @@ modules:
   # --------------------------------------------------------------- fonctions
   function:
     - key: get-work-brief-fn
-      handler: src/index.getWorkBrief
+      handler: index.getWorkBrief
     - key: check-readiness-fn
-      handler: src/index.checkReadiness
-    - key: get-acceptance-criteria-fn
-      handler: src/index.getAcceptanceCriteria
-    - key: get-related-decisions-fn
-      handler: src/index.getRelatedDecisions
+      handler: index.checkReadiness
+    - key: get-accept-criteria-fn
+      handler: index.getAcceptanceCriteria
+    - key: get-rel-decisions-fn
+      handler: index.getRelatedDecisions
     - key: get-failed-attempts-fn
-      handler: src/index.getFailedAttempts
+      handler: index.getFailedAttempts
     - key: get-neighbor-changes-fn
-      handler: src/index.getNeighborChanges
+      handler: index.getNeighborChanges
     - key: list-ready-work-fn
-      handler: src/index.listReadyWork
+      handler: index.listReadyWork
     - key: ask-clarification-fn
-      handler: src/index.askClarification
+      handler: index.askClarification
     - key: post-work-report-fn
-      handler: src/index.postWorkReport
-    - key: record-failed-attempt-fn
-      handler: src/index.recordFailedAttempt
+      handler: index.postWorkReport
+    - key: record-failed-att-fn
+      handler: index.recordFailedAttempt
     - key: claim-work-fn
-      handler: src/index.claimWork
+      handler: index.claimWork
     - key: issue-context-resolver
-      handler: src/index.resolveIssueContext
-    - key: project-settings-resolver
-      handler: src/index.resolveProjectSettings
+      handler: index.resolveIssueContext
+    - key: project-settings-res
+      handler: index.resolveProjectSettings
     - key: project-page-resolver
-      handler: src/index.resolveProjectPage
+      handler: index.resolveProjectPage
     - key: issue-updated-trigger
-      handler: src/index.onIssueUpdated
+      handler: index.onIssueUpdated
     - key: issue-commented-trigger
-      handler: src/index.onIssueCommented
-    - key: issue-link-created-trigger
-      handler: src/index.onIssueLinkCreated
-    - key: issue-link-deleted-trigger
-      handler: src/index.onIssueLinkDeleted
+      handler: index.onIssueCommented
+    - key: issue-link-create-trig
+      handler: index.onIssueLinkCreated
+    - key: issue-link-delete-trig
+      handler: index.onIssueLinkDeleted
     - key: brief-builder-consumer
-      handler: src/index.onBriefBuildRequested
-    - key: issue-context-dynamic-properties
-      handler: src/index.issueContextDynamicProperties
+      handler: index.onBriefBuildRequested
+    - key: issue-context-dyn-prop
+      handler: index.issueContextDynamicProperties
 
   # ----------------------------------------------------------------- actions
   # Chaque action est un outil MCP. Les entrées sont limited aux chaînes,
@@ -92,7 +92,7 @@ modules:
 
     - key: get-acceptance-criteria
       name: Get acceptance criteria
-      function: get-acceptance-criteria-fn
+      function: get-accept-criteria-fn
       actionVerb: GET
       description: |
         Renvoie la liste numérotée et vérifiable des critères d'acceptation du
@@ -106,7 +106,7 @@ modules:
 
     - key: get-related-decisions
       name: Get related decisions
-      function: get-related-decisions-fn
+      function: get-rel-decisions-fn
       actionVerb: GET
       description: |
         Renvoie les décisions applicables au ticket : décision, date, auteur et
@@ -220,7 +220,7 @@ modules:
 
     - key: record-failed-attempt
       name: Record failed attempt
-      function: record-failed-attempt-fn
+      function: record-failed-att-fn
       actionVerb: CREATE
       description: |
         Enregistre une tentative abandonnée et la raison de l'échec. Le prochain
@@ -348,13 +348,13 @@ modules:
       label: Préparation
       icon: https://raw.githubusercontent.com/BaptisteFaisy/brief-forge/main/static/icon.svg
       dynamicProperties:
-        function: issue-context-dynamic-properties
+        function: issue-context-dyn-prop
 
   jira:projectSettingsPage:
     - key: brief-project-settings
       resource: main
       resolver:
-        function: project-settings-resolver
+        function: project-settings-res
       render: native
       title: Brief de contexte
       layout: native
@@ -383,13 +383,13 @@ modules:
       filter:
         ignoreSelf: true
     - key: issue-link-created
-      function: issue-link-created-trigger
+      function: issue-link-create-trig
       events:
         - avi:jira:created:issuelink
       filter:
         ignoreSelf: true
     - key: issue-link-deleted
-      function: issue-link-deleted-trigger
+      function: issue-link-delete-trig
       events:
         - avi:jira:deleted:issuelink
       filter:
@@ -411,11 +411,6 @@ modules:
     - key: main-llm
       model:
         - claude
-
-  # ---------------------------------------------------------------- ressources
-  resource:
-    - key: main
-      path: static/build
 
 permissions:
   scopes:
@@ -439,3 +434,13 @@ app:
     major: 1
     minor: 0
     patch: 0
+
+# ------------------------------------------------------------------ ressources
+# CLI >= 15 : les ressources sont une section racine (plus `modules.resource`).
+# UI Kit natif (`render: native`) : `path` pointe vers le FICHIER source
+# d'entrée de l'UI (pas un dossier). `src/ui/frontend.tsx` exporte `run`
+# (aiguillage entre les trois modules d'écran) — à confirmer au premier
+# `forge deploy` : voir docs/DEPLOY.md § 5.1.
+resources:
+  - key: main
+    path: src/ui/frontend.tsx
