@@ -69,7 +69,7 @@ jobs:
       # ferait dépasser le budget de 5 minutes. Le cache npm de la machine est
       # réutilisé (`--prefer-offline`).
       - name: Node (version du runner)
-        run: node --version && npm --version
+        run: node --version
 
       - name: Installation des dépendances
         run: npm ci --prefer-offline --no-audit --no-fund
