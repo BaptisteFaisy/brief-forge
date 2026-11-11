@@ -1,5 +1,7 @@
 # brief-forge
 
+Ligne de test CONFLIT-HERMES (branche A) : cette ligne entrera en conflit avec main.
+
 Serveur MCP Forge : briefs sourcés pour agents de code à partir de tickets Jira (Codegeist 2026).
 
 ## Pipeline
