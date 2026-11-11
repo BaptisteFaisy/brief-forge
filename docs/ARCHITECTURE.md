@@ -35,7 +35,7 @@ manifest.yml
 ├── modules.jira:projectSettingsPage  réglages projet (statut, labels, champ CA)
 ├── modules.trigger ×4          avi:jira:updated|commented:issue,
 │                               avi:jira:created|deleted:issuelink
-├── modules.consumer            file de (re)construction des briefs
+├── modules.consumer            file platform `brief-build-queue` : (re)construction des briefs
 ├── modules.sql                 8 tables (stockage Forge SQL)
 └── modules.llm                 Forge AI : condensation + détection d'instruction
 ```
@@ -115,9 +115,28 @@ entre l'UI et le serveur MCP.
 | `avi:jira:deleted:issuelink` | idem |
 
 Le trigger est **idempotent et bon marché** : il n'écrit qu'un drapeau
-`stale = 1` et, au plus, un identifiant dans la file. Le `consumer` (queue
-Forge) fait le travail lourd : collecte, condensation LLM, écriture des trois
-budgets (`s`, `m`, `l`) et du score.
+`stale = 1` et, au plus, un identifiant dans la file. Flux réel (BC-12) :
+
+```
+événement Jira ──► trigger ──► stale = 1
+                     │
+                     └─ si statut/label déclencheur :
+                          push {issueKey, projectKey, reason}
+                          sur la file platform `brief-build-queue` (@forge/events)
+                          + journal dédupliqué en GlobalStorage (idempotence)
+                                   │
+                          Forge invoque le consumer `brief-builder-consumer`,
+                          qui reçoit un AsyncEvent : le message est dans
+                          `event.body` (jamais à la racine)
+                                   │
+                          trois budgets (s, m, l) construits et enregistrés
+```
+
+Le `consumer` fait le travail lourd : collecte, condensation LLM, écriture
+des trois budgets (`s`, `m`, `l`) et du score. Sans événement exploitable, il
+balaie la file `GlobalStorage` entière. Un échec du push platform ne fait
+**jamais** échouer le trigger : il est journalisé et le brief se construit
+alors à la volée (chemin chaud, § 4.1).
 
 ### 3.6 `sql` — stockage
 
@@ -160,7 +179,10 @@ Objectif : le cas nominal est **une lecture SQL**, pas une reconstruction.
 ### 4.2 Chemin froid (précalcul)
 
 ```
-trigger Jira ──► stale = 1 ──► file ──► consumer
+trigger Jira ──► stale = 1 ──► push file platform `brief-build-queue`
+                               (+ journal GlobalStorage dédupliqué)
+                                          │
+                                  consumer (AsyncEvent.body)
                                           │
                      collectIssue / collectDecisions /
                      collectNeighborChanges / collectProjectSettings
