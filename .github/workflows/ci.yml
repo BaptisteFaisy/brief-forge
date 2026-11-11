@@ -12,8 +12,14 @@ on:
   merge_group:
   workflow_dispatch:
 
+# Le groupe inclut le SHA de tête : un run **orphelin** (runner coupé en pleine
+# exécution, GitHub le laisse `in_progress` et refuse de l'annuler) bloquait
+# sinon toute la branche — vécu le 11/11 sur la PR #25, groupe `ci-25` occupé par
+# un run mort, les suivants restaient `queued` indéfiniment. Avec le SHA dans la
+# clé, chaque tête a son groupe : un run mort ne bloque plus rien, et deux runs
+# de la même tête restent dédupliqués par `cancel-in-progress`.
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.event.pull_request.number || github.ref }}-${{ github.sha }}
   cancel-in-progress: true
 
 permissions:
@@ -38,24 +44,28 @@ jobs:
       - name: Sanity docs (UTF-8, non vides)
         run: |
           python3 - <<'EOF'
-          import pathlib
-          racines = [pathlib.Path(".")]
-          exts = {".md", ".mdx", ".txt"}
+          import os
+          # os.walk avec élagage : rglob("*") descendait dans node_modules
+          # (~50 000 fichiers) et coûtait 137 s sur le runner — mesuré le 11/11
+          # sur la PR #12, soit la moitié du budget CI de 5 minutes.
+          SAUTER = {".git", "node_modules", "dist", "build", "coverage", ".gradle"}
+          EXTS = {".md", ".mdx", ".txt"}
           vides, illisibles, total = [], [], 0
-          for racine in racines:
-              for f in sorted(racine.rglob("*")):
-                  if ".git/" in f.as_posix() or f.suffix.lower() not in exts:
+          for racine, dossiers, fichiers in os.walk("."):
+              dossiers[:] = [d for d in dossiers if d not in SAUTER]
+              for nom in sorted(fichiers):
+                  if os.path.splitext(nom)[1].lower() not in EXTS:
                       continue
-                  if "node_modules/" in f.as_posix():
-                      continue
+                  chemin = os.path.join(racine, nom)
                   total += 1
                   try:
-                      contenu = f.read_text(encoding="utf-8")
+                      with open(chemin, encoding="utf-8") as fh:
+                          contenu = fh.read()
                   except (OSError, UnicodeError):
-                      illisibles.append(f.as_posix())
+                      illisibles.append(chemin)
                       continue
                   if not contenu.strip():
-                      vides.append(f.as_posix())
+                      vides.append(chemin)
           print("%d doc(s) contrôlé(s)" % total)
           for f in illisibles:
               print("::error::illisible en UTF-8 : %s" % f)
