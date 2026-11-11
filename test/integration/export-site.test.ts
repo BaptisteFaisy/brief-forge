@@ -43,7 +43,24 @@ function liveFile(name: string): Record<string, unknown> {
   return JSON.parse(raw) as Record<string, unknown>;
 }
 
+/**
+ * Horloge figée sur la capture réelle : l'en-tête du brief (« Construit le … »)
+ * vient de `new Date()` dans le moteur. Sans horloge figée, le fichier généré
+ * change chaque jour et le dépôt se salit pour rien ; avec, `npm run site-data`
+ * est reproductible à l'octet près.
+ */
+const GENERATED_AT = new Date('2026-11-11T21:35:00Z');
+
 describe('export des données du site public', () => {
+  beforeAll(() => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'] });
+    jest.setSystemTime(GENERATED_AT);
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
   it('écrit site/assets/data.json à partir du vrai moteur', async () => {
     const chosen = FIXTURES.filter((fixture) => SELECTION.includes(fixture.key));
     expect(chosen.length).toBeGreaterThanOrEqual(10);
@@ -99,7 +116,10 @@ describe('export des données du site public', () => {
     const liveBrief = liveFile('pay6-brief.json');
     const liveReadiness = liveFile('pay6-readiness.json');
     const payload = {
-      generatedAt: new Date().toISOString().slice(0, 10),
+      // Date **dérivée des données** (capture réelle), pas de l'horloge : le
+      // fichier généré reste identique d'un run à l'autre, donc le dépôt ne
+      // se salit pas à chaque `npx jest`.
+      generatedAt: GENERATED_AT.toISOString().slice(0, 10),
       engine: { budgets: BUDGETS, fixtures: FIXTURES.length, exported: tickets.length },
       live: {
         origin: 'live',
