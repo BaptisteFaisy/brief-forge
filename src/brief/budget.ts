@@ -6,6 +6,10 @@
  * sections périphériques perdent leurs derniers éléments d'abord, l'objectif et
  * les critères sont les derniers touchés) et le brief **dit** ce qu'il a coupé
  * en nommant l'outil qui donne la suite.
+ *
+ * Si la coupe d'éléments ne suffit pas (un seul élément immense), on compacte
+ * les textes affichés plutôt que de tronquer le Markdown : les dix sections
+ * restent présentes, et leurs éléments gardent leur source et leur date.
  */
 
 import { BUDGET_TOKENS, SectionName } from '../config';
@@ -34,10 +38,10 @@ export const TRIM_ORDER: SectionName[] = [
 ];
 
 /** Nombre minimal d'éléments qu'une section conserve quand on la coupe. */
-const MIN_VISIBLE: Partial<Record<SectionName, number>> = {
-  Objectif: 1,
-  "Critères d'acceptation": 1,
-};
+const MIN_VISIBLE = 1;
+
+/** Nombre maximal de passes de compaction des textes. */
+const MAX_COMPACTIONS = 12;
 
 export interface BudgetResult {
   markdown: string;
@@ -67,10 +71,36 @@ function nextTrimmable(
     const spec = specs.find((candidate) => candidate.name === name);
     if (!spec) continue;
     const current = visible.get(name) ?? spec.items.length;
-    const floor = MIN_VISIBLE[name] ?? 0;
-    if (current > floor) return name;
+    if (current > MIN_VISIBLE) return name;
   }
   return undefined;
+}
+
+/** Rendu courant des sections, avec le compte d'items visibles par section. */
+function render(specs: SectionSpec[], visible: Map<SectionName, number>): RenderedSection[] {
+  return renderSections(specs, visible);
+}
+
+/**
+ * Compacte les textes des items visibles : le texte le plus long de chaque
+ * section est raccourci, sa source et sa date sont conservées.
+ */
+function compactTexts(specs: SectionSpec[], visible: Map<SectionName, number>): SectionSpec[] {
+  return specs.map((spec) => {
+    const count = visible.get(spec.name) ?? spec.items.length;
+    const shown = spec.items.slice(0, count);
+    if (shown.length === 0) return spec;
+    const longest = shown.reduce(
+      (max, item) => Math.max(max, estimateTokens(item.text)),
+      0
+    );
+    if (longest <= 24) return spec;
+    const cap = Math.max(16, Math.floor(longest / 2));
+    const items = spec.items.map((item, index) =>
+      index < count ? { ...item, text: truncateToTokens(item.text, cap) } : item
+    );
+    return { ...spec, items };
+  });
 }
 
 /**
@@ -87,14 +117,21 @@ export function applyBudget(
   const visible = new Map<SectionName, number>(
     specs.map((spec) => [spec.name, spec.items.length])
   );
-  let sections = renderSections(specs, visible);
+  let working = specs;
+  let sections = render(working, visible);
   let markdown = assemble(header, sections, footer);
   for (let guard = 0; guard < 1000; guard += 1) {
     if (fitsBudget(markdown, tokenTarget, BUDGET_TOLERANCE)) break;
-    const name = nextTrimmable(specs, visible);
+    const name = nextTrimmable(working, visible);
     if (!name) break;
     visible.set(name, (visible.get(name) ?? 0) - 1);
-    sections = renderSections(specs, visible);
+    sections = render(working, visible);
+    markdown = assemble(header, sections, footer);
+  }
+  for (let pass = 0; pass < MAX_COMPACTIONS; pass += 1) {
+    if (fitsBudget(markdown, tokenTarget, BUDGET_TOLERANCE)) break;
+    working = compactTexts(working, visible);
+    sections = render(working, visible);
     markdown = assemble(header, sections, footer);
   }
   if (!fitsBudget(markdown, tokenTarget, BUDGET_TOLERANCE)) {

@@ -42,9 +42,7 @@ function dedupeByUrl(refs: SourceRef[]): SourceRef[] {
 }
 
 export function buildSources(input: BriefInput): SectionSpec {
-  const items = sourceRefs(input).map((ref) =>
-    sourcedItem(`${ref.label} — ${ref.url}`, 'Référence', ref.date)
-  );
+  const items = sourceRefs(input).map((ref) => sourcedItem(ref.url, ref.label, ref.date));
   return {
     name: NAME,
     rank: rankOf(NAME),

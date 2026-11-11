@@ -83,22 +83,42 @@ async function loadSettings(issue: IssueSnapshot, deps: BriefDeps): Promise<Proj
   );
 }
 
-/** Collecte complète d'un ticket, chaque source pouvant échouer isolément. */
+/**
+ * Dépendances effectives : celles injectées, sinon le câblage production.
+ *
+ * Règle : si **au moins une** doublure est injectée, on n'utilise **que** les
+ * doublures — un test ne doit jamais déclencher une collecte réelle. Sinon on
+ * branche le câblage production (collecte Jira/Confluence + stockage).
+ */
+export function resolveDeps(deps: BriefDeps): BriefDeps {
+  const injected = Object.keys(deps).some(
+    (key) => deps[key as keyof BriefDeps] !== undefined
+  );
+  if (injected) return deps;
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { defaultBriefDeps } = require('./defaults') as typeof import('./defaults');
+  return { ...defaultBriefDeps(), ...deps };
+}
+
+/**
+ * Collecte complète d'un ticket, chaque source pouvant échouer isolément.
+ */
 export async function collectAll(issueKey: string, deps: BriefDeps): Promise<BriefInput> {
-  if (!deps.collectIssue) {
+  const effective = resolveDeps(deps);
+  if (!effective.collectIssue) {
     throw new BriefError(
       'INTERNAL_ERROR',
       'Collecte indisponible : injecter `collectIssue` dans les dépendances du brief.'
     );
   }
-  const issue = await deps.collectIssue(issueKey);
-  const settings = await loadSettings(issue, deps);
+  const issue = await effective.collectIssue(issueKey);
+  const settings = await loadSettings(issue, effective);
   const errors: string[] = [];
   const [decisions, neighbors, attempts, lessons] = await Promise.all([
-    safe('Décisions', () => deps.collectDecisions?.(issue, settings) ?? Promise.resolve([]), [], errors),
-    safe('Changements voisins', () => deps.collectNeighborChanges?.(issue) ?? Promise.resolve([]), [], errors),
-    safe('Tentatives', () => deps.loadAttempts?.(issueKey) ?? Promise.resolve([]), [], errors),
-    safe('Leçons', () => deps.loadLessons?.(issueKey) ?? Promise.resolve([]), [], errors),
+    safe('Décisions', () => effective.collectDecisions?.(issue, settings) ?? Promise.resolve([]), [], errors),
+    safe('Changements voisins', () => effective.collectNeighborChanges?.(issue) ?? Promise.resolve([]), [], errors),
+    safe('Tentatives', () => effective.loadAttempts?.(issueKey) ?? Promise.resolve([]), [], errors),
+    safe('Leçons', () => effective.loadLessons?.(issueKey) ?? Promise.resolve([]), [], errors),
   ]);
   return { issue, settings, decisions, neighbors, attempts, lessons, errors };
 }

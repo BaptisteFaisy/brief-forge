@@ -7,6 +7,8 @@
 
 export { buildBrief, buildAllBudgets, collectAll, buildSpecs, briefHeader } from './builder';
 export type { BriefDeps } from './builder';
+export { defaultBriefDeps } from './defaults';
+export { resolveDeps } from './builder';
 export { applyBudget, budgetTarget, visibleItems, BUDGET_TOLERANCE, TRIM_ORDER } from './budget';
 export type { BudgetResult } from './budget';
 export {

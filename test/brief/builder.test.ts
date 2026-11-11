@@ -3,7 +3,7 @@
  * réinjection des tentatives échouées.
  */
 
-import { buildAllBudgets, buildBrief } from '../../src/brief/builder';
+import { buildAllBudgets, buildBrief, resolveDeps } from '../../src/brief/builder';
 import { BUDGET_TOKENS, SECTION_ORDER } from '../../src/config';
 import { BriefData } from '../../src/types';
 import { estimateTokens } from '../../src/util/tokens';
@@ -93,8 +93,29 @@ describe('buildBrief — sources et garanties BC', () => {
 
 });
 
-describe('buildBrief — budgets et pannes de collecte', () => {
-  it('précalcule les trois budgets avec des cibles croissantes', async () => {
+describe('buildBrief — dépendances', () => {
+  it('utilise les dépendances injectées quand il y en a', () => {
+    const deps = { collectIssue: jest.fn() };
+    expect(resolveDeps(deps)).toBe(deps);
+  });
+
+  it('retombe sur le câblage production quand rien n’est injecté', () => {
+    const resolved = resolveDeps({});
+    expect(typeof resolved.collectIssue).toBe('function');
+    expect(typeof resolved.readSettings).toBe('function');
+  });
+
+  it('refuse de construire un brief sans collecte disponible', async () => {
+    const failing = {
+      collectIssue: async () => {
+        throw new Error('collecte indisponible');
+      },
+    };
+    await expect(buildBrief('TST-101', 'm', failing)).rejects.toThrow('collecte indisponible');
+  });
+});
+
+describe('buildBrief — budgets et pannes de collecte', () => {  it('précalcule les trois budgets avec des cibles croissantes', async () => {
     const { deps } = makeFixture();
     const all = await buildAllBudgets('TST-101', deps);
     const briefs: BriefData[] = [all.s, all.m, all.l];

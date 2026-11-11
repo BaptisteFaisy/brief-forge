@@ -12,9 +12,9 @@
  */
 
 import { SECTION_ORDER, SectionName } from '../config';
-import { displayDate, isSourceComplete, quoteUntrusted } from '../security/quoting';
+import { displayDate, hardenUntrustedText, isSourceComplete } from '../security/quoting';
 import { SourcedItem } from '../types';
-import { bulletList, numberedCriteria, sectionHeader, truncationHint } from '../util/markdown';
+import { bulletList, numberedCriteria, quoteBlock, sectionHeader, truncationHint } from '../util/markdown';
 import { estimateTokens } from '../util/tokens';
 
 export type SectionKind = 'quote' | 'criteria' | 'bullets';
@@ -69,13 +69,20 @@ export function itemLine(item: SourcedItem): string {
   return `${item.text} — _${item.source}, ${displayDate(item.date)}_`;
 }
 
+/**
+ * Cite un contenu tiers : durcissement (BC-10) puis bloc `>` préfixé de sa
+ * source et de sa date. Un texte vide après durcissement est supprimé.
+ */
+function quotedItem(item: SourcedItem): string {
+  const hardened = hardenUntrustedText(item.text);
+  if (hardened === '') return '';
+  return quoteBlock(hardened, item.source, displayDate(item.date));
+}
+
 function renderBody(kind: SectionKind, items: SourcedItem[]): string {
   if (items.length === 0) return '';
   if (kind === 'quote') {
-    return items
-      .map((item) => quoteUntrusted(item.text, { author: item.source, date: item.date }))
-      .filter((block) => block.length > 0)
-      .join('\n\n');
+    return items.map(quotedItem).filter((block) => block.length > 0).join('\n\n');
   }
   if (kind === 'criteria') {
     return numberedCriteria(items.map(itemLine));
