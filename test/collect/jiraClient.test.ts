@@ -1,6 +1,7 @@
 import { IssueNotFoundError, PermissionDeniedError } from '../../src/util/errors';
 import {
   adfToText,
+  collectCustomFields,
   createJiraClient,
   fieldNameMap,
   findAcceptanceCriteriaField,
@@ -145,7 +146,10 @@ describe('jiraClient — analyse du ticket', () => {
     expect(snapshot.assignee).toBe('Bob');
     expect(snapshot.epicKey).toBe('PROJ-1');
     expect(snapshot.acceptanceCriteria).toEqual(['export CSV', 'en-têtes conservés']);
+    // Indexation double : le réglage projet peut citer l'identifiant brut ou le
+    // nom lisible, les deux doivent résoudre vers la même valeur.
     expect(snapshot.customFields).toEqual({
+      customfield_10010: "Critères d'acceptation:\n- export CSV\n- en-têtes conservés",
       'Acceptance Criteria': "Critères d'acceptation:\n- export CSV\n- en-têtes conservés",
     });
   });
@@ -250,6 +254,19 @@ describe('jiraClient — historique et métadonnées', () => {
       customfield_10011: 'Story Points',
     });
     expect(findAcceptanceCriteriaField([])).toBeUndefined();
+  });
+
+  it('indexe chaque champ personnalisé par son id brut ET son nom lisible', () => {
+    // Le réglage projet peut porter l'une ou l'autre forme : les deux doivent
+    // résoudre vers la même valeur (sinon le champ dédié n'est jamais trouvé).
+    const fields = { customfield_10042: '- critère A', customfield_10043: 'zone' };
+    const indexed = collectCustomFields(fields, { customfield_10042: 'Definition of Done' });
+
+    expect(indexed['customfield_10042']).toBe('- critère A');
+    expect(indexed['Definition of Done']).toBe('- critère A');
+    // Sans nom connu, l'identifiant brut reste la seule clé.
+    expect(indexed['customfield_10043']).toBe('zone');
+    expect(Object.keys(indexed)).toHaveLength(3);
   });
 
   it('convertit une description ADF en texte', () => {

@@ -5,8 +5,13 @@
  * décision manquante : l'agent devra la deviner. Une question est considérée
  * comme traitée dès qu'un **autre** auteur commente ensuite (réponse, précision
  * ou reformulation) : le fil a alors quelqu'un au volant.
+ *
+ * Seuls les commentaires citables comptent (`citableComments`) : un commentaire
+ * à visibilité restreinte n'alimente ni le brief ni le score, et sa présence ne
+ * vaut pas réponse à une question publique.
  */
 
+import { citableComments } from '../../collect/visibility';
 import { buildOutcome, countWords, isQuestion, normalizeText, quoteExcerpt } from '../support';
 import type { CriterionInput, CriterionOutcome, IssueComment } from '../types';
 
@@ -25,7 +30,7 @@ function hasLaterReply(comments: IssueComment[], index: number, author: string):
 }
 
 export function checkUnansweredQuestion(input: CriterionInput): CriterionOutcome {
-  const comments = [...(input.comments ?? [])].sort(byDate);
+  const comments = citableComments(input.comments).sort(byDate);
 
   const pending = comments.filter(
     (comment, index) => isQuestion(comment.body) && !hasLaterReply(comments, index, comment.author)

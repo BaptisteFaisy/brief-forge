@@ -276,6 +276,13 @@ function commentVisibility(comment: Record<string, unknown>): 'public' | 'restri
  * Champs personnalisés, épique, critères
  * ------------------------------------------------------------------ */
 
+/**
+ * Champs personnalisés du ticket, indexés **par identifiant brut et par nom
+ * lisible** : les réglages projet (`acceptanceCriteriaField`) peuvent porter
+ * l'une ou l'autre forme — l'interface de configuration accepte les deux
+ * (`src/ui/i18n.ts`) — et les deux doivent résoudre vers la même valeur. Quand
+ * la table des noms de champs est inaccessible, seul l'identifiant est posé.
+ */
 export function collectCustomFields(
   fields: Record<string, unknown>,
   fieldNames: Record<string, string> = {}
@@ -285,7 +292,9 @@ export function collectCustomFields(
     if (!id.startsWith('customfield_')) continue;
     const text = stringifyFieldValue(value);
     if (text === '') continue;
-    result[fieldNames[id] ?? id] = text;
+    result[id] = text;
+    const name = fieldNames[id];
+    if (name && name !== id) result[name] = text;
   }
   return result;
 }

@@ -4,8 +4,10 @@ import {
   collectIssue,
   collectNeighborChanges,
   collectProjectSettings,
+  decisionsFromComments,
   hasQuestion,
   isDecisionComment,
+  mergeDecisions,
   selectCandidateComments,
 } from '../../src/collect/issueCollector';
 import { defaultProjectSettings } from '../../src/collect/settingsDefaults';
@@ -241,6 +243,124 @@ describe('issueCollector — collectDecisions', () => {
     await expect(
       collectDecisions(fakeIssue(), defaultProjectSettings('PROJ'), { confluence })
     ).rejects.toBeInstanceOf(PermissionDeniedError);
+  });
+});
+
+describe('issueCollector — décisions en commentaire (§ 7.1, rang 3)', () => {
+  function decisionComment(overrides: Partial<IssueComment> = {}): IssueComment {
+    return {
+      id: 'c-9',
+      author: 'dana',
+      createdAt: '2027-01-08T09:00:00.000Z',
+      body: '[décision] Limiter les lots à 250 lignes\nLe serveur refuse au-delà de 250 lignes.',
+      ...overrides,
+    };
+  }
+
+  it('transforme un commentaire marqué en décision sourcée et datée', () => {
+    const decisions = decisionsFromComments(fakeIssue({ comments: [decisionComment()] }));
+
+    expect(decisions).toEqual([
+      {
+        title: 'Limiter les lots à 250 lignes',
+        url: '/browse/PROJ-7?focusedCommentId=c-9',
+        date: '2027-01-08T09:00:00.000Z',
+        author: 'dana',
+        body: 'Le serveur refuse au-delà de 250 lignes.',
+      },
+    ]);
+  });
+
+  it('reconnaît les autres marqueurs et ignore un commentaire ordinaire', () => {
+    const decisions = decisionsFromComments(
+      fakeIssue({
+        comments: [
+          decisionComment({ id: 'c-1', body: 'ADR: conserver le flux côté serveur' }),
+          decisionComment({ id: 'c-2', body: "On a choisi l'encodage UTF-8 avec BOM." }),
+          decisionComment({ id: 'c-3', body: 'Merci pour le retour, je regarde demain.' }),
+        ],
+      })
+    );
+
+    expect(decisions.map((decision) => decision.title)).toEqual([
+      'conserver le flux côté serveur',
+      "On a choisi l'encodage UTF-8 avec BOM.",
+    ]);
+  });
+
+  it('exclut un commentaire à visibilité restreinte du brief', () => {
+    const decisions = decisionsFromComments(
+      fakeIssue({
+        comments: [decisionComment({ id: 'c-r', visibility: 'restricted' })],
+      })
+    );
+
+    expect(decisions).toEqual([]);
+  });
+
+  it('fusionne sans doublon (auteur + date + texte) et trie du plus récent au plus ancien', () => {
+    const page = {
+      title: 'Limiter les lots à 250 lignes',
+      url: 'https://exemple.atlassian.net/wiki/pages/9',
+      date: '2027-01-08T09:00:00.000Z',
+      author: 'dana',
+      body: 'Le serveur refuse au-delà de 250 lignes.',
+    };
+    const comment = decisionsFromComments(fakeIssue({ comments: [decisionComment()] }))[0];
+
+    const merged = mergeDecisions([
+      comment,
+      page,
+      { ...page, title: 'Autre règle', body: 'Autre texte', date: '2027-02-01T09:00:00.000Z' },
+    ]);
+
+    expect(merged.map((decision) => decision.title)).toEqual([
+      'Autre règle',
+      'Limiter les lots à 250 lignes',
+    ]);
+  });
+
+  it('garde les décisions en commentaire quand Confluence est indisponible', async () => {
+    const confluence: ConfluenceClient = {
+      searchPagesByLabels: async () => {
+        throw Object.assign(new Error('product not allowed'), {
+          name: 'RequestProductNotAllowedError',
+        });
+      },
+      fetchPageContent: async () => '',
+    };
+    const issue = fakeIssue({ comments: [decisionComment()] });
+
+    const decisions = await collectDecisions(issue, defaultProjectSettings('PROJ'), {
+      confluence,
+    });
+
+    expect(decisions.map((decision) => decision.title)).toEqual(['Limiter les lots à 250 lignes']);
+    expect(decisions[0].url).toContain('focusedCommentId=c-9');
+  });
+
+  it('fusionne pages Confluence et commentaires, la plus récente d’abord', async () => {
+    const confluence: ConfluenceClient = {
+      searchPagesByLabels: async () => [
+        {
+          title: 'ADR-012',
+          _links: { base: 'https://exemple.atlassian.net', webui: '/wiki/pages/42' },
+          version: { when: '2027-02-02T08:30:00.000Z', by: { displayName: 'Dana' } },
+          body: { storage: { value: '<p>Export en flux.</p>' } },
+        },
+      ],
+      fetchPageContent: async () => '',
+    };
+    const issue = fakeIssue({ comments: [decisionComment()] });
+
+    const decisions = await collectDecisions(issue, defaultProjectSettings('PROJ'), {
+      confluence,
+    });
+
+    expect(decisions.map((decision) => decision.title)).toEqual([
+      'ADR-012',
+      'Limiter les lots à 250 lignes',
+    ]);
   });
 });
 

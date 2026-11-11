@@ -28,6 +28,9 @@ import type {
 
 export const NEIGHBOR_WINDOW_DAYS = 90;
 
+/** Clés sous lesquelles `fetchDevStatus` range ses deux réponses (PR, dépôts). */
+const DEV_STATUS_BUCKETS = ['pullRequests', 'commits'] as const;
+
 const MAX_DEPTH = 8;
 
 export const NEIGHBOR_CHANGES_QUERY = `query NeighborChanges(
@@ -148,21 +151,33 @@ function toNeighborChange(entry: ChangeNode): NeighborChange {
   };
 }
 
-/** Repli : information de développement Jira (PR + commits du même composant). */
+/**
+ * Repli : information de développement Jira (PR + commits du même composant).
+ *
+ * `fetchDevStatus` interroge deux `dataType` et range chaque réponse sous sa
+ * propre clé (`pullRequests` pour les PR, `commits` pour les dépôts) : les deux
+ * sont lues ici, et dans chaque bloc `detail` on prend les pull requests **et**
+ * les commits des dépôts, quelle que soit la forme renvoyée par l'API.
+ */
 export function parseDevStatusChanges(raw: unknown): NeighborChange[] {
   const changes: NeighborChange[] = [];
-  for (const detail of asArray(dig(raw, 'pullRequests', 'detail'))) {
-    const record = asRecord(detail);
-    for (const pr of asArray(record.pullRequests)) {
-      changes.push(devPullRequest(pr));
-    }
-    for (const repository of asArray(record.repositories)) {
-      for (const commit of asArray(asRecord(repository).commits)) {
-        changes.push(devCommit(commit));
-      }
+  for (const bucket of DEV_STATUS_BUCKETS) {
+    for (const detail of asArray(dig(raw, bucket, 'detail'))) {
+      changes.push(...devDetailChanges(asRecord(detail)));
     }
   }
   return dedupeChanges(changes);
+}
+
+/** Pull requests et commits d'un bloc `detail` de l'information de développement. */
+function devDetailChanges(detail: Record<string, unknown>): NeighborChange[] {
+  const changes = asArray(detail.pullRequests).map(devPullRequest);
+  for (const repository of asArray(detail.repositories)) {
+    for (const commit of asArray(asRecord(repository).commits)) {
+      changes.push(devCommit(commit));
+    }
+  }
+  return changes;
 }
 
 function devPullRequest(value: unknown): NeighborChange {

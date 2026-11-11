@@ -67,4 +67,42 @@ describe('checkUnansweredQuestion', () => {
 
     expect(outcome.passed).toBe(true);
   });
+
+  it('ignore une question posée en visibilité restreinte', () => {
+    // Un commentaire restreint n'alimente pas le score : il est exclu du brief.
+    const outcome = checkUnansweredQuestion(
+      makeInput({}, {}, {
+        comments: [
+          makeComment({
+            body: 'Quel taux de TVA appliquer sur ce client ?',
+            visibility: 'restricted',
+          }),
+        ],
+      })
+    );
+
+    expect(outcome.passed).toBe(true);
+    expect(outcome.reason).toBeUndefined();
+  });
+
+  it('ne compte pas une réponse en visibilité restreinte comme une réponse', () => {
+    const outcome = checkUnansweredQuestion(
+      makeInput({}, {}, {
+        comments: [
+          makeComment({ id: 'c1', body: 'Quel format de date attend-on dans le CSV ?' }),
+          makeComment({
+            id: 'c2',
+            author: 'sam.bernard',
+            createdAt: '2026-11-03T09:00:00.000Z',
+            body: 'Format ISO 8601, réponse interne non publique.',
+            visibility: 'restricted',
+          }),
+        ],
+      })
+    );
+
+    expect(outcome.passed).toBe(false);
+    expect(outcome.reason).toContain('Quel format de date');
+    expect(outcome.reason).not.toContain('réponse interne non publique');
+  });
 });

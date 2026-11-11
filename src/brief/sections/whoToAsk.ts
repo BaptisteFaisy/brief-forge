@@ -2,10 +2,12 @@
  * Section 8 — À qui demander.
  *
  * Les personnes joignables sur ce ticket, avec la date du dernier signal les
- * concernant : rapporteur, assigné, et auteurs des commentaires (du plus récent
- * au plus ancien). L'agent sait ainsi qui relancer plutôt que de deviner.
+ * concernant : rapporteur, assigné, et auteurs des commentaires **citables**
+ * (visibilité restreinte exclue, `citableComments`), du plus récent au plus
+ * ancien. L'agent sait ainsi qui relancer plutôt que de deviner.
  */
 
+import { citableComments } from '../../collect/visibility';
 import { BriefInput } from '../inputs';
 import { SectionSpec, rankOf, sourcedItem } from '../sectionBuilder';
 
@@ -30,7 +32,7 @@ export function contacts(input: BriefInput): Contact[] {
   };
   add(issue.reporter, 'rapporteur', issue.createdAt);
   add(issue.assignee, 'assigné', issue.updatedAt);
-  for (const comment of issue.comments) {
+  for (const comment of citableComments(issue.comments)) {
     add(comment.author, 'commentateur', comment.createdAt);
   }
   return Array.from(byName.values()).sort(

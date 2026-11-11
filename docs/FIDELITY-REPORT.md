@@ -58,9 +58,9 @@
 | CMD-2 | 02 — Ticket sans description | s | 482 | 100 % | 0 | 482 | 100 % | 0 | 0 | 100 % | 100 % | non prêt (39) | 100 % | ✓ |
 | CMD-2 | 02 — Ticket sans description | m | 482 | 100 % | 0 | 482 | 100 % | 0 | 0 | 100 % | 100 % | non prêt (39) | 100 % | ✓ |
 | CMD-2 | 02 — Ticket sans description | l | 482 | 100 % | 0 | 482 | 100 % | 0 | 0 | 100 % | 100 % | non prêt (39) | 100 % | ✓ |
-| CMD-3 | 03 — Ticket à 300 commentaires | s | 617 | 100 % | 0 | 617 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
-| CMD-3 | 03 — Ticket à 300 commentaires | m | 628 | 100 % | 0 | 628 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
-| CMD-3 | 03 — Ticket à 300 commentaires | l | 628 | 100 % | 0 | 628 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
+| CMD-3 | 03 — Ticket à 300 commentaires | s | 693 | 100 % | 0 | 693 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
+| CMD-3 | 03 — Ticket à 300 commentaires | m | 704 | 100 % | 0 | 704 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
+| CMD-3 | 03 — Ticket à 300 commentaires | l | 704 | 100 % | 0 | 704 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
 | CMD-4 | 04 — Décisions contradictoires | s | 677 | 100 % | 0 | 677 | 100 % | 0 | 0 | 100 % | 100 % | prêt (90) | 100 % | ✓ |
 | CMD-4 | 04 — Décisions contradictoires | m | 688 | 100 % | 0 | 688 | 100 % | 0 | 0 | 100 % | 100 % | prêt (90) | 100 % | ✓ |
 | CMD-4 | 04 — Décisions contradictoires | l | 688 | 100 % | 0 | 688 | 100 % | 0 | 0 | 100 % | 100 % | prêt (90) | 100 % | ✓ |
@@ -70,12 +70,12 @@
 | PAY-6 | 06 — Commentaire avec instruction adressée à un agent | s | 583 | 100 % | 0 | 583 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
 | PAY-6 | 06 — Commentaire avec instruction adressée à un agent | m | 594 | 100 % | 0 | 594 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
 | PAY-6 | 06 — Commentaire avec instruction adressée à un agent | l | 594 | 100 % | 0 | 594 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
-| PAY-7 | 07 — Commentaire et description contenant des secrets | s | 539 | 100 % | 0 | 539 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
-| PAY-7 | 07 — Commentaire et description contenant des secrets | m | 539 | 100 % | 0 | 539 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
-| PAY-7 | 07 — Commentaire et description contenant des secrets | l | 539 | 100 % | 0 | 539 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
-| PAY-8 | 08 — Commentaires à visibilité restreinte | s | 553 | 100 % | 0 | 553 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
-| PAY-8 | 08 — Commentaires à visibilité restreinte | m | 564 | 100 % | 0 | 564 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
-| PAY-8 | 08 — Commentaires à visibilité restreinte | l | 564 | 100 % | 0 | 564 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
+| PAY-7 | 07 — Commentaire et description contenant des secrets | s | 538 | 100 % | 0 | 538 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
+| PAY-7 | 07 — Commentaire et description contenant des secrets | m | 538 | 100 % | 0 | 538 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
+| PAY-7 | 07 — Commentaire et description contenant des secrets | l | 538 | 100 % | 0 | 538 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
+| PAY-8 | 08 — Commentaires à visibilité restreinte | s | 538 | 100 % | 0 | 538 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
+| PAY-8 | 08 — Commentaires à visibilité restreinte | m | 549 | 100 % | 0 | 549 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
+| PAY-8 | 08 — Commentaires à visibilité restreinte | l | 549 | 100 % | 0 | 549 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
 | PAY-9 | 09 — Lien bloquant ouvert et utilisateur sans droit de commenter | s | 538 | 100 % | 0 | 538 | 100 % | 0 | 0 | 100 % | 100 % | prêt (85) | 100 % | ✓ |
 | PAY-9 | 09 — Lien bloquant ouvert et utilisateur sans droit de commenter | m | 549 | 100 % | 0 | 549 | 100 % | 0 | 0 | 100 % | 100 % | prêt (85) | 100 % | ✓ |
 | PAY-9 | 09 — Lien bloquant ouvert et utilisateur sans droit de commenter | l | 549 | 100 % | 0 | 549 | 100 % | 0 | 0 | 100 % | 100 % | prêt (85) | 100 % | ✓ |
@@ -118,9 +118,9 @@
 | PAY-22 | 22 — Page Confluence étiquetée adr liée à l’épopée | s | 580 | 100 % | 0 | 580 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
 | PAY-22 | 22 — Page Confluence étiquetée adr liée à l’épopée | m | 591 | 100 % | 0 | 591 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
 | PAY-22 | 22 — Page Confluence étiquetée adr liée à l’épopée | l | 591 | 100 % | 0 | 591 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
-| PAY-23 | 23 — Confluence indisponible, repli sur commentaires | s | 540 | 100 % | 0 | 540 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
-| PAY-23 | 23 — Confluence indisponible, repli sur commentaires | m | 551 | 100 % | 0 | 551 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
-| PAY-23 | 23 — Confluence indisponible, repli sur commentaires | l | 551 | 100 % | 0 | 551 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
+| PAY-23 | 23 — Confluence indisponible, repli sur commentaires | s | 554 | 100 % | 0 | 554 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
+| PAY-23 | 23 — Confluence indisponible, repli sur commentaires | m | 565 | 100 % | 0 | 565 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
+| PAY-23 | 23 — Confluence indisponible, repli sur commentaires | l | 565 | 100 % | 0 | 565 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
 | PAY-24 | 24 — Teamwork Graph indisponible, repli dev-status Jira | s | 650 | 100 % | 0 | 650 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
 | PAY-24 | 24 — Teamwork Graph indisponible, repli dev-status Jira | m | 661 | 100 % | 0 | 661 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
 | PAY-24 | 24 — Teamwork Graph indisponible, repli dev-status Jira | l | 661 | 100 % | 0 | 661 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |

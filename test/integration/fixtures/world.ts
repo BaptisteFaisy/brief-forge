@@ -281,8 +281,8 @@ export type DevDataType = 'pullrequest' | 'repository';
  * Information de développement Jira : repli quand le graphe est muet.
  *
  * Forme réelle de l'API : `dataType=pullrequest` ne renvoie que les pull
- * requests, `dataType=repository` que les dépôts et leurs commits. (Le socle ne
- * relit que la première réponse : voir `fakeJira.test.ts`, défaut signalé.)
+ * requests, `dataType=repository` que les dépôts et leurs commits. Le socle lit
+ * les deux réponses (`parseDevStatusChanges`) : les commits ne sont plus perdus.
  */
 export function devStatusPayload(
   fixture: FixtureSpec,

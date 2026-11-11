@@ -128,10 +128,15 @@ describe('Port Jira : ce que la fixture sème est ce qui est rendu', () => {
   });
 
   it('marque les commentaires à visibilité restreinte et les tient hors du brief', async () => {
-    const { issue, brief } = await probe(byKey('PAY-8'));
+    const { issue, brief, score } = await probe(byKey('PAY-8'));
     const restricted = issue.comments.filter((comment) => comment.visibility === 'restricted');
     expect(restricted).toHaveLength(1);
     expect(restricted[0].author).toBe('juridique');
+    // L'information reste dans le snapshot, mais rien n'entre dans le brief :
+    // ni le corps, ni l'auteur (section 8), ni le score de préparation.
+    expect(brief.whoToAsk.map((item) => item.text).join(' ')).not.toContain('juridique');
+    expect(brief.gaps.join(' ')).not.toContain('audit juridique');
+    expect(score.gaps.map((gap) => gap.reason).join(' ')).not.toContain('audit juridique');
     for (const forbidden of byKey('PAY-8').expected.mustNotAppear) {
       expect(brief.markdown).not.toContain(forbidden);
     }
@@ -175,20 +180,23 @@ describe('Confluence : recherche étiquetée et repli sur panne', () => {
     expect(decisions[0].url).toContain('/wiki/spaces/ARCH/pages/');
   });
 
-  it('indisponible → aucune décision, le commentaire de décision reste visible', async () => {
+  it('indisponible → repli sur les décisions en commentaires', async () => {
     const fixture = byKey('PAY-23');
     const world = buildWorld(fixture);
     const issue = await collectIssue(fixture.key, { jira: world.jira });
     const settings = await world.briefDeps.readSettings!(fixture.projectKey);
 
-    await expect(collectDecisions(issue, settings, { confluence: world.confluence })).resolves.toEqual([]);
+    const decisions = await collectDecisions(issue, settings, { confluence: world.confluence });
     expect(world.state.confluenceReads).toBe(0);
     expect(issue.comments.map((comment) => comment.id)).toContain('decision-1');
+    expect(decisions).toHaveLength(1);
+    expect(decisions[0].author).toBe('luc');
+    expect(decisions[0].title).toContain('limiter la taille du lot à 250');
 
     const brief = await buildBrief(fixture.key, 'm', world.briefDeps);
-    expect(brief.applicableDecisions).toHaveLength(0);
+    expect(brief.applicableDecisions).toHaveLength(1);
     expect(brief.markdown).not.toContain('ADR-060');
-    expect(brief.gaps.join(' ')).toContain('Aucune décision liée');
+    expect(brief.markdown).toContain('limiter la taille du lot à 250');
   });
 });
 
@@ -211,9 +219,9 @@ describe('Teamwork Graph : voisins et repli sur l’information de développemen
     expect(changes.map((change) => change.title).join(' ')).toContain('PR-104');
   });
 
-  it('documente un défaut du socle : le repli dev-status perd les commits', async () => {
-    // `fetchDevStatus` range la réponse `dataType=repository` sous `commits`, mais
-    // `parseDevStatusChanges` ne lit que `pullRequests.detail[].repositories[]`.
+  it('corrige le repli dev-status : les commits sont bien conservés', async () => {
+    // `fetchDevStatus` renvoie `pullRequests` et `commits` ; `parseDevStatusChanges`
+    // lit les deux et ne perd plus les commits quand le graphe est indisponible.
     const fixture: FixtureSpec = {
       ...byKey('PAY-24'),
       key: 'PAY-24',
@@ -225,7 +233,7 @@ describe('Teamwork Graph : voisins et repli sur l’information de développemen
     const world = buildWorld(fixture);
     const issue = await collectIssue(fixture.key, { jira: world.jira });
     const changes = await collectNeighborChanges(issue, { graph: world.graph, jira: world.jira });
-    expect(changes.map((change) => change.title)).toEqual(['PR-X']);
+    expect(changes.map((change) => change.title)).toEqual(['PR-X', 'commit-X']);
   });
 });
 

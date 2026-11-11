@@ -114,7 +114,9 @@ export function isoDaysAgo(days: number, now: Date = new Date()): string {
 
 const CRITERIA_HEADING =
   /(acceptance\s+criteria|crit[èe]res?\s+d[’']acceptation|definition\s+of\s+done|\bdod\b)/i;
-const LIST_ITEM = /^\s*(?:[-*+]\s+(?:\[[ x]\]\s*)?|\d+[.)]\s+)(.+)$/;
+const LIST_MARKER_SOURCE = '\\s*(?:[-*+]\\s+(?:\\[[ x]\\]\\s*)?|\\d+[.)]\\s+)';
+const LIST_MARKER = new RegExp(`^${LIST_MARKER_SOURCE}`);
+const LIST_ITEM = new RegExp(`^${LIST_MARKER_SOURCE}(.+)$`);
 const GIVEN_WHEN_THEN = /^\s*(?:given|when|then|étant donné|quand|alors)\b/i;
 const ANY_HEADING = /^\s*(?:#{1,6}\s|\*\*[^*]+\*\*\s*:?\s*$)/;
 
@@ -147,6 +149,24 @@ export function hasAcceptanceCriteria(text: string): boolean {
 /** Vrai si le texte contient un intitulé « critères d'acceptation » / DoD. */
 export function hasCriteriaHeading(text: string): boolean {
   return text !== '' && CRITERIA_HEADING.test(text);
+}
+
+/**
+ * Critères d'acceptation d'un **champ dédié** (réglage projet) : liste à puces
+ * ou section intitulée d'abord, sinon découpage brut en lignes / points-virgules.
+ * La ligne d'intitulé et les marqueurs de liste ne sont jamais des critères.
+ */
+export function criteriaFromFieldValue(text: string, max = 15): string[] {
+  const structured = extractAcceptanceCriteria(text, max);
+  return structured.length > 0 ? structured : plainCriteriaLines(text, max);
+}
+
+function plainCriteriaLines(text: string, max: number): string[] {
+  return text
+    .split(/\r?\n|;\s*/)
+    .map((line) => line.replace(LIST_MARKER, '').trim())
+    .filter((line) => line !== '' && !CRITERIA_HEADING.test(line))
+    .slice(0, max);
 }
 
 function criteriaFromSection(lines: string[], max: number): string[] {

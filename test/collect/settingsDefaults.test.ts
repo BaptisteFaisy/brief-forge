@@ -2,6 +2,7 @@ import { IssueNotFoundError, PermissionDeniedError } from '../../src/util/errors
 import {
   asRecord,
   asString,
+  criteriaFromFieldValue,
   defaultProjectSettings,
   dig,
   extractAcceptanceCriteria,
@@ -122,6 +123,22 @@ describe('settingsDefaults — critères d’acceptation', () => {
     expect(matchesCriteriaFieldName('Acceptance Criteria')).toBe(true);
     expect(matchesCriteriaFieldName("Critères d'acceptation")).toBe(true);
     expect(matchesCriteriaFieldName('Story Points')).toBe(false);
+  });
+
+  it('lit un champ dédié : ni l’intitulé ni les puces ne deviennent un critère', () => {
+    const field = "Critères d'acceptation:\n- export CSV\n- 250 lignes au plus";
+    expect(criteriaFromFieldValue(field)).toEqual(['export CSV', '250 lignes au plus']);
+  });
+
+  it('lit un champ dédié en liste simple, en lignes libres ou séparées par « ; »', () => {
+    expect(criteriaFromFieldValue('- premier\n- [x] second')).toEqual(['premier', 'second']);
+    expect(criteriaFromFieldValue('Critère A\nCritère B')).toEqual(['Critère A', 'Critère B']);
+    expect(criteriaFromFieldValue('Critère A; Critère B')).toEqual(['Critère A', 'Critère B']);
+    expect(criteriaFromFieldValue('')).toEqual([]);
+  });
+
+  it('borne le nombre de critères lus dans le champ dédié', () => {
+    expect(criteriaFromFieldValue('- a\n- b\n- c', 2)).toEqual(['a', 'b']);
   });
 });
 
