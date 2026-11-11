@@ -4,7 +4,8 @@
   "description": "Forge app + MCP server: sourced, budgeted context briefs for coding agents, built from Jira tickets (Codegeist 2026).",
   "main": "src/index.ts",
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "tsc -p tsconfig.json --noEmit false --outDir dist",
+    "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
     "fidelity": "jest test/integration/fidelity --silent=false",
@@ -22,11 +23,13 @@
   "license": "MIT",
   "dependencies": {
     "@forge/api": "^8.5.0",
-    "@forge/bridge": "^3.5.0",
+    "@forge/bridge": "^7.3.0",
+    "@forge/react": "^12.5.0",
     "@forge/resolver": "^2.0.2",
     "@forge/sql": "^4.0.10",
     "@forge/storage": "^2.0.3",
     "@forge/ui": "^1.11.4",
+    "buffer": "^6.0.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

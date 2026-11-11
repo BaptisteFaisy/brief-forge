@@ -49,6 +49,20 @@ forge-atlassian --version  # Doit afficher 15.1.0 (ou supérieur)
 
 ---
 
+## 2 bis. Deux corrections de build déjà appliquées (à connaître)
+
+Le bundler Forge (webpack 5 + ts-loader) impose deux réglages que le projet
+n'avait pas :
+
+1. **`tsconfig.json` : `noEmit` doit être à `false`.** Avec `noEmit: true`,
+   ts-loader échoue : « TypeScript emitted no output for …/src/index.ts ».
+   Le contrôle de type local reste disponible via `npm run typecheck`
+   (`tsc --noEmit`), et `npm run build` émet dans `dist/`.
+2. **`buffer` doit être une dépendance explicite.** `@forge/ui` entraîne
+   `sha.js` → `safe-buffer` → `require('buffer')`, que webpack 5 ne polyfille
+   plus : « Module not found: Can't resolve 'buffer' ». Ajouter `buffer@^6`
+   aux dépendances suffit (pas de `resolve.fallback` configurable sur Forge).
+
 ## 3. Contrôle local hors ligne avant connexion
 
 Avant toute action réseau, vérifier l'intégrité locale du dépôt :
