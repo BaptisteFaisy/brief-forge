@@ -1,17 +1,27 @@
 /**
  * Point d'entrée du module événements.
  *
- * Réexporte les briques (file, triggers, consumer) et fournit le câblage Forge
- * réel : stockage, lecture Jira, construction de brief et dépôt. Les modules
- * d'autres lots (`../brief/builder`, `../storage`) ne sont résolus qu'à
- * l'appel — les tests n'ont donc jamais besoin du runtime Forge ni d'eux.
+ * Réexporte les briques (file, triggers, consumer, file platform) et fournit
+ * le câblage Forge réel : stockage, lecture Jira, construction de brief et
+ * dépôt. Les modules d'autres lots (`../brief/builder`, `../storage`) ne sont
+ * résolus qu'à l'appel — les tests n'ont donc jamais besoin du runtime Forge
+ * ni d'eux.
  */
 export * from './queue';
 export * from './triggers';
 export * from './consumer';
+export * from './platformQueue';
 
 import { BriefData, Budget } from '../types';
 import { BriefConsumerDeps, BriefStorePort, ConsumeReport, StoredBriefSummary, consumeBriefQueue } from './consumer';
+import {
+  PlatformQueuePusher,
+  createForgePlatformPusher,
+  extractIssueKeyFromEvent,
+  extractProjectKeyFromEvent,
+  extractReasonFromEvent,
+  withPlatformPush,
+} from './platformQueue';
 import {
   BriefQueuePort,
   KeyValueStore,
@@ -81,6 +91,8 @@ export interface EventRuntimeOverrides {
   loadSettings?: TriggerDeps['loadSettings'];
   buildBrief?: BriefConsumerDeps['buildBrief'];
   logger?: Logger;
+  /** Pousseur de la file platform `brief-build-queue` (déclenche le consumer). */
+  platformPush?: PlatformQueuePusher;
 }
 
 let storeCache: KeyValueStore | null = null;
@@ -129,11 +141,19 @@ export function createForgeIssueStateLoader(): TriggerDeps['loadIssueState'] {
 
 function resolveTriggerDeps(overrides: EventRuntimeOverrides): TriggerDeps {
   const logger = overrides.logger ?? consoleLogger;
+  // La file GlobalStorage (journal dédupliqué) est décorée du push platform :
+  // c'est lui qui déclenche `brief-builder-consumer` côté Forge. La file du
+  // consumer n'est PAS décorée (un re-push différé relancerait la boucle).
+  const queue = withPlatformPush(
+    overrides.queue ?? createQueue(forgeStore(), logger),
+    overrides.platformPush ?? createForgePlatformPusher(),
+    logger
+  );
   return {
     markBriefStale: overrides.markBriefStale ?? ((issueKey) => storageApi().markBriefStale(issueKey)),
     loadIssueState: overrides.loadIssueState ?? createForgeIssueStateLoader(),
     loadSettings: overrides.loadSettings ?? ((projectKey) => storageApi().loadProjectSettings(projectKey)),
-    queue: overrides.queue ?? createQueue(forgeStore(), logger),
+    queue,
     logger,
   };
 }
@@ -160,6 +180,35 @@ export async function runQueueConsumer(
   overrides: EventRuntimeOverrides = {}
 ): Promise<ConsumeReport> {
   return consumeBriefQueue(resolveConsumerDeps(overrides));
+}
+
+/**
+ * Point d'entrée du `consumer` Forge (`brief-builder-consumer`).
+ *
+ * `@forge/events` 2+ remet un `AsyncEvent` : le message poussé par le trigger
+ * est dans `event.body`. Tolérant : `event.body.issueKey`, `event.issueKey`,
+ * ou aucun événement → balayage complet de la file. Le ticket de l'événement
+ * est (ré)inscrit dans la file GlobalStorage avant consommation, ce qui
+ * garantit ses trois budgets même si l'entrée locale avait été abandonnée.
+ */
+export async function runConsumerForEvent(
+  event?: unknown,
+  overrides: EventRuntimeOverrides = {}
+): Promise<ConsumeReport> {
+  const deps = resolveConsumerDeps(overrides);
+  const logger = overrides.logger ?? consoleLogger;
+  const issueKey = extractIssueKeyFromEvent(event);
+  if (issueKey) {
+    logger.info(`Consumer déclenché pour ${issueKey}`, { issueKey });
+    await deps.queue.enqueue({
+      issueKey,
+      projectKey: extractProjectKeyFromEvent(event),
+      reason: extractReasonFromEvent(event) ?? 'issue-updated',
+    });
+  } else {
+    logger.info('Consumer déclenché sans ticket précis : balayage complet de la file');
+  }
+  return consumeBriefQueue(deps);
 }
 
 /** Handlers directement référençables par `manifest.yml`. */

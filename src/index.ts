@@ -29,7 +29,7 @@ import { loadBrief } from './storage';
 import { computeReadiness } from './readiness';
 import { buildBrief } from './brief';
 import { collectIssue, collectProjectSettings } from './collect/issueCollector';
-import { defaultEventHandlers, runQueueConsumer } from './events';
+import { defaultEventHandlers, runConsumerForEvent } from './events';
 
 // --------------------------------------------------------------------- actions
 export {
@@ -165,7 +165,12 @@ export const onIssueCommented = (event: any) => defaultEventHandlers['avi:jira:c
 export const onIssueLinkCreated = (event: any) => defaultEventHandlers['avi:jira:created:issuelink'](event);
 export const onIssueLinkDeleted = (event: any) => defaultEventHandlers['avi:jira:deleted:issuelink'](event);
 
-/** Consommateur de la file de construction (trois budgets, en arrière-plan). */
-export async function onBriefBuildRequested(): Promise<void> {
-  await runQueueConsumer();
+/**
+ * Consommateur de la file platform `brief-build-queue` (trois budgets, en
+ * arrière-plan). `@forge/events` 2+ remet un `AsyncEvent` : le message poussé
+ * par le trigger est dans `event.body`. Tolérant : `event.body.issueKey`,
+ * `event.issueKey`, ou aucun événement (balayage complet de la file locale).
+ */
+export async function onBriefBuildRequested(event?: unknown): Promise<void> {
+  await runConsumerForEvent(event);
 }
