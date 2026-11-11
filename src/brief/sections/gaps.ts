@@ -5,6 +5,7 @@
  * comble en inventant. Un trou est une question à poser, pas une hypothèse.
  */
 
+import { formatDateFr } from '../../util/dates';
 import { BriefInput } from '../inputs';
 import { SectionSpec, rankOf, sourcedItem } from '../sectionBuilder';
 import { criteriaLines } from './acceptanceCriteria';
@@ -12,6 +13,7 @@ import { failedAttempts } from './alreadyTried';
 
 const NAME = 'Trous' as const;
 const UNKNOWN = 'analyse du brief';
+const MAX_DISCARDED_LISTED = 3;
 
 /** Liste brute des trous détectés dans les données collectées. */
 export function gapList(input: BriefInput): string[] {
@@ -41,7 +43,31 @@ export function gapList(input: BriefInput): string[] {
   for (const error of input.errors ?? []) {
     gaps.push(`Collecte incomplète — ${error}`);
   }
+  gaps.push(...discardedNotices(input));
   return gaps;
+}
+
+/**
+ * Un contenu écarté par la couche de sécurité (instruction adressée à un
+ * agent) ne doit pas disparaître en silence : le brief dit **combien** de
+ * passages ont été retirés, de qui et de quand, sans jamais les reproduire
+ * (§ 13 : « retiré et remplacé par "contenu écarté…" » ; BC-03 : signaler
+ * plutôt que combler).
+ */
+export function discardedNotices(input: BriefInput): string[] {
+  const discarded = (input.issue.comments ?? []).filter((comment) => comment.discarded);
+  if (discarded.length === 0) return [];
+  const listed = discarded
+    .slice(0, MAX_DISCARDED_LISTED)
+    .map((comment) => `${comment.author}, ${formatDateFr(comment.createdAt)}`)
+    .join(' ; ');
+  const extra = discarded.length - MAX_DISCARDED_LISTED;
+  const tail = extra > 0 ? ` et ${extra} autre(s)` : '';
+  return [
+    `${discarded.length} passage(s) écarté(s) du brief : instruction suspecte ` +
+      `adressée à un agent (${listed}${tail}). Le contenu n'est pas reproduit — ` +
+      'à vérifier par un humain avant de coder.',
+  ];
 }
 
 export function buildGaps(input: BriefInput, builtAt: string): SectionSpec {
