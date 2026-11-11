@@ -64,14 +64,15 @@ jobs:
           raise SystemExit(1 if (illisibles or vides) else 0)
           EOF
 
-      - name: Node (version + cache npm)
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
+      # Node est déjà installé sur le runner self-hosted (R630) : pas de
+      # `actions/setup-node`, qui téléchargerait la toolchain à chaque run et
+      # ferait dépasser le budget de 5 minutes. Le cache npm de la machine est
+      # réutilisé (`--prefer-offline`).
+      - name: Node (version du runner)
+        run: node --version && npm --version
 
       - name: Installation des dépendances
-        run: npm ci --no-audit --no-fund
+        run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Typage (tsc --noEmit)
         run: npx tsc --noEmit
