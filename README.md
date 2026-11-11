@@ -2,8 +2,6 @@
 
 > **Sourced, budgeted context briefs for coding agents — straight from Jira.**
 
-Ligne de test CONFLIT-A2A-B (branche de test réelle) : en conflit avec le titre enrichi de main.
-
 Serveur MCP Forge : briefs sourcés pour agents de code à partir de tickets Jira (Codegeist 2026).
 
 brief-forge is an Atlassian **Forge** app with a built-in **MCP server**
