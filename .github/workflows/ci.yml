@@ -12,8 +12,14 @@ on:
   merge_group:
   workflow_dispatch:
 
+# Le groupe inclut le SHA de tête : un run **orphelin** (runner coupé en pleine
+# exécution, GitHub le laisse `in_progress` et refuse de l'annuler) bloquait
+# sinon toute la branche — vécu le 11/11 sur la PR #25, groupe `ci-25` occupé par
+# un run mort, les suivants restaient `queued` indéfiniment. Avec le SHA dans la
+# clé, chaque tête a son groupe : un run mort ne bloque plus rien, et deux runs
+# de la même tête restent dédupliqués par `cancel-in-progress`.
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.event.pull_request.number || github.ref }}-${{ github.sha }}
   cancel-in-progress: true
 
 permissions:
