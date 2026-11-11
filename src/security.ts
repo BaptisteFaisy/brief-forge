@@ -1,19 +1,13 @@
 /**
- * Motifs de secrets sensibles à masquer systématiquement (BC-11).
+ * Socle de sécurité : masquage des secrets (BC-11) et détection d'instructions
+ * cachées (BC-10) pour le **chemin de lecture** — collecte, actions de lecture
+ * et sections du brief passent tous par `sanitizeTicketContent`.
+ *
+ * Les motifs de secrets vivent dans `src/security/secretPatterns.ts`, seule
+ * source partagée avec le chemin d'écriture (`secretMasker`) : un motif ajouté
+ * là-bas s'applique aux deux chemins, sans duplication ni import circulaire.
  */
-const SECRET_PATTERNS: Array<{ regex: RegExp; placeholder: string }> = [
-  { regex: /sk-[A-Za-z0-9_\-]{20,}/g, placeholder: '[SECRET:OPENAI_KEY]' },
-  { regex: /sk-ant-[A-Za-z0-9_\-]{20,}/g, placeholder: '[SECRET:ANTHROPIC_KEY]' },
-  { regex: /ghp_[A-Za-z0-9]{36}/g, placeholder: '[SECRET:GH_PAT]' },
-  { regex: /gho_[A-Za-z0-9]{36}/g, placeholder: '[SECRET:GH_OAUTH]' },
-  { regex: /github_pat_[A-Za-z0-9_]{50,}/g, placeholder: '[SECRET:GH_FINE_PAT]' },
-  { regex: /xox[baprs]-[0-9A-Za-z\-]{10,}/g, placeholder: '[SECRET:SLACK_TOKEN]' },
-  { regex: /AKIA[0-9A-Z]{16}/g, placeholder: '[SECRET:AWS_ACCESS_KEY]' },
-  {
-    regex: /(password|secret|passwd|pwd|token)\s*[:=]\s*["']?([^\s"';&]+)["']?/gi,
-    placeholder: '$1: [SECRET:REDACTED]',
-  },
-];
+import { SECRET_MARKER_PATTERN, SECRET_PATTERNS } from './security/secretPatterns';
 
 /**
  * Motifs d'instructions suspectes ou injections de prompt (BC-10).
@@ -31,30 +25,43 @@ const INJECTION_PATTERNS: RegExp[] = [
   /override\s+safety/i,
 ];
 
-/**
- * Marqueur produit par le masquage, par exemple `[SECRET:GH_PAT]`.
- * Il ne doit jamais être re-masqué par un passage suivant (idempotence).
- */
-const MARKER_PATTERN = /\[SECRET:[^\]]*\]/g;
-
-export function redactSecrets(text: string): string {
-  if (!text) return '';
-  // On protège les marqueurs déjà posés : seuls les segments hors marqueur
-  // sont nettoyés, puis on recolle. Sans cela, le motif générique
-  // `token: …` reconnaît « SECRET: » à l'intérieur d'un marqueur et le
-  // détruit (`[SECRET: REDA*[REDACTED]]`), en perdant le type du secret.
-  const parts = text.split(MARKER_PATTERN);
-  const markers = text.match(MARKER_PATTERN) ?? [];
-  const cleaned = parts.map((part) => {
-    let segment = part;
-    for (const { regex, placeholder } of SECRET_PATTERNS) {
-      segment = segment.replace(regex, placeholder);
-    }
-    return segment;
-  });
-  return cleaned
+/** Recolle les segments nettoyés en remettant chaque marqueur à sa place. */
+function rejoin(segments: string[], markers: string[]): string {
+  return segments
     .map((segment, index) => (index < markers.length ? segment + markers[index] : segment))
     .join('');
+}
+
+/**
+ * Applique **un** motif, uniquement hors des marqueurs `[SECRET:…]` déjà
+ * présents. Les marqueurs sont mis à l'écart par `split` puis recollés tels
+ * quels.
+ *
+ * Sans cette protection, le motif générique `token: …` reconnaît « SECRET: »
+ * **à l'intérieur** d'un marqueur et le détruit (`[SECRET: [SECRET:REDACTED]`),
+ * en perdant le type du secret qui sert à l'audit.
+ */
+function applyOutsideMarkers(text: string, regex: RegExp, placeholder: string): string {
+  const markers = text.match(SECRET_MARKER_PATTERN) ?? [];
+  if (markers.length === 0) return text.replace(regex, placeholder);
+  const segments = text.split(SECRET_MARKER_PATTERN).map((part) => part.replace(regex, placeholder));
+  return rejoin(segments, markers);
+}
+
+/**
+ * Masque tous les secrets reconnus dans un texte tiers (BC-11).
+ *
+ * Un seul passage, un motif après l'autre, et les marqueurs sont protégés **à
+ * chaque étape** : ceux déjà présents dans le texte d'origine comme ceux posés
+ * par un motif précédent du même passage. D'où l'idempotence — masquer deux
+ * fois ne dégrade jamais un marqueur, qui garde son type.
+ */
+export function redactSecrets(text: string): string {
+  if (!text) return '';
+  return SECRET_PATTERNS.reduce(
+    (masked, { regex, placeholder }) => applyOutsideMarkers(masked, regex, placeholder),
+    text
+  );
 }
 
 export function detectPromptInjection(text: string): boolean {
@@ -62,6 +69,11 @@ export function detectPromptInjection(text: string): boolean {
   return INJECTION_PATTERNS.some((pattern) => pattern.test(text));
 }
 
+/**
+ * Point d'application unique du nettoyage sur le chemin de lecture : un contenu
+ * tiers est soit écarté (instruction suspecte, BC-10), soit renvoyé avec ses
+ * secrets masqués (BC-11) — le même jeu de motifs que sur le chemin d'écriture.
+ */
 export function sanitizeTicketContent(
   text: string,
   author = 'inconnu',
