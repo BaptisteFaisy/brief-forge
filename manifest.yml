@@ -48,6 +48,8 @@ modules:
       handler: index.onBriefBuildRequested
     - key: issue-context-dyn-prop
       handler: index.issueContextDynamicProperties
+    - key: dev-probe-fn
+      handler: index.devProbe
 
   # ----------------------------------------------------------------- actions
   # Chaque action est un outil MCP. Les entrées sont limited aux chaînes,
@@ -391,6 +393,14 @@ modules:
         - avi:jira:deleted:issuelink
       filter:
         ignoreSelf: true
+
+  # ------------------------------------------------------------------- sonde
+  # Webtrigger de développement (token-gaté par PROBE_TOKEN, voir
+  # `src/dev/probe.ts`) : valide la chaîne réelle sur un site sans navigateur.
+  # Aucune écriture Jira/Confluence ; à retirer avant une soumission publique.
+  webtrigger:
+    - key: dev-probe
+      function: dev-probe-fn
 
   # ----------------------------------------------------------------- consumer
   consumer:

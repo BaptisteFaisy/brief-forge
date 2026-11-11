@@ -159,6 +159,14 @@ export async function issueContextDynamicProperties(payload: any): Promise<any> 
   };
 }
 
+// ------------------------------------------------------------------ sonde dev
+/**
+ * Sonde de développement (webtrigger token-gatée, voir `src/dev/probe.ts`).
+ * Sert à valider un déploiement réel sans navigateur ; elle ne fait aucune
+ * écriture dans Jira ni Confluence.
+ */
+export { devProbe } from './dev/probe';
+
 // ------------------------------------------------------------------- événements
 export const onIssueUpdated = (event: any) => defaultEventHandlers['avi:jira:updated:issue'](event);
 export const onIssueCommented = (event: any) => defaultEventHandlers['avi:jira:commented:issue'](event);
