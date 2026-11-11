@@ -67,9 +67,9 @@
 | CMD-5 | 05 — Décision de plus de 18 mois | s | 577 | 100 % | 0 | 577 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
 | CMD-5 | 05 — Décision de plus de 18 mois | m | 588 | 100 % | 0 | 588 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
 | CMD-5 | 05 — Décision de plus de 18 mois | l | 588 | 100 % | 0 | 588 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
-| PAY-6 | 06 — Commentaire avec instruction adressée à un agent | s | 583 | 100 % | 0 | 583 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
-| PAY-6 | 06 — Commentaire avec instruction adressée à un agent | m | 594 | 100 % | 0 | 594 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
-| PAY-6 | 06 — Commentaire avec instruction adressée à un agent | l | 594 | 100 % | 0 | 594 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
+| PAY-6 | 06 — Commentaire avec instruction adressée à un agent | s | 637 | 100 % | 0 | 637 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
+| PAY-6 | 06 — Commentaire avec instruction adressée à un agent | m | 648 | 100 % | 0 | 648 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
+| PAY-6 | 06 — Commentaire avec instruction adressée à un agent | l | 648 | 100 % | 0 | 648 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
 | PAY-7 | 07 — Commentaire et description contenant des secrets | s | 538 | 100 % | 0 | 538 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
 | PAY-7 | 07 — Commentaire et description contenant des secrets | m | 538 | 100 % | 0 | 538 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
 | PAY-7 | 07 — Commentaire et description contenant des secrets | l | 538 | 100 % | 0 | 538 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |

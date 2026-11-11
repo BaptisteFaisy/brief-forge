@@ -42,6 +42,12 @@ export interface IssueComment {
   createdAt: string;
   body: string;
   visibility?: 'public' | 'restricted';
+  /**
+   * Vrai si le contenu a été écarté par la couche de sécurité (instruction
+   * adressée à un agent) : `body` ne contient alors que la mention d'écart.
+   * Le brief doit le **signaler** (§ 13, BC-03) au lieu de le taire.
+   */
+  discarded?: boolean;
 }
 
 export interface IssueHistoryEntry {

@@ -74,6 +74,14 @@ export function detectPromptInjection(text: string): boolean {
  * tiers est soit écarté (instruction suspecte, BC-10), soit renvoyé avec ses
  * secrets masqués (BC-11) — le même jeu de motifs que sur le chemin d'écriture.
  */
+/** Préfixe unique de la mention d'écart : la détection en dépend (§ 13). */
+export const DISCARDED_PREFIX = '[contenu écarté :';
+
+/** Vrai si ce texte est une mention d'écart produite par `sanitizeTicketContent`. */
+export function isDiscardedNotice(text: string): boolean {
+  return typeof text === 'string' && text.startsWith(DISCARDED_PREFIX);
+}
+
 export function sanitizeTicketContent(
   text: string,
   author = 'inconnu',
@@ -81,7 +89,7 @@ export function sanitizeTicketContent(
 ): string {
   if (!text) return '';
   if (detectPromptInjection(text)) {
-    return `[contenu écarté : instruction suspecte détectée dans le message de ${author}, ${date}]`;
+    return `${DISCARDED_PREFIX} instruction suspecte détectée dans le message de ${author}, ${date}]`;
   }
   return redactSecrets(text);
 }

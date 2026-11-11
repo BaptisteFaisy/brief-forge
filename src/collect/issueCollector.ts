@@ -162,6 +162,11 @@ export function selectCandidateComments(
       selected.set(comment.id, comment);
     }
   });
+  // Un contenu écarté par la sécurité est toujours conservé : c'est ainsi que
+  // le brief peut signaler qu'on lui a caché quelque chose (§ 13, BC-03).
+  ordered.forEach((comment) => {
+    if (comment.discarded) selected.set(comment.id, comment);
+  });
   return [...selected.values()].sort((left, right) =>
     left.createdAt.localeCompare(right.createdAt)
   );
