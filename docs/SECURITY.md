@@ -2,8 +2,10 @@
 
 > Document interne (français). Modèle de menace, contre-mesures, et surtout
 > **ce qui n'est pas couvert**. Les primitives citées sont dans
-> `src/security.ts` (socle, ne pas modifier) et `src/security/` (couche
-> complète).
+> `src/security.ts` (socle : masquage et détection d'instructions) et
+> `src/security/` (couche complète) ; les motifs de secrets, eux, sont dans
+> `src/security/secretPatterns.ts`, seule source partagée par la lecture et
+> l'écriture.
 
 ## 1. Le problème de fond
 
@@ -90,20 +92,55 @@ d'information ; un passage serait une faille.
 
 ### 3.3 Masquage des secrets
 
-`redactSecrets` / `maskSecrets` remplacent les motifs connus par un jeton
-explicite :
+**Un seul jeu de motifs, un seul point d'application.** Les motifs vivent dans
+`src/security/secretPatterns.ts` (données pures, aucun import) ; ils sont
+appliqués par `redactSecrets` (`src/security.ts`), que `maskSecrets`
+(`src/security/secretMasker.ts`) relaie sans règle propre. Les deux chemins de
+l'app partagent donc exactement le même masquage :
+
+| Chemin | Point d'entrée | Qui l'appelle |
+|---|---|---|
+| **lecture** | `sanitizeTicketContent` → `redactSecrets` | collecte Jira (résumé, description, critères, commentaires) et Confluence (corps des pages), actions `get-*`, sections du brief |
+| **écriture** | `maskSecrets` → `redactSecrets` | `maskForWrite` (`post-work-report`, `record-failed-attempt`, `ask-clarification`), `sanitizeForBrief` |
+
+C'est la correction d'une faille réelle : avant, le chemin de lecture
+n'appliquait que 8 motifs, alors que le masqueur complet (21) n'était branché
+que sur l'écriture — un JWT ou une clé privée PEM collés dans un commentaire
+Jira traversaient le brief en clair et partaient vers l'agent de code.
+
+Ce qui est masqué, et par quel jeton (le type survit : c'est ce qui rend
+l'audit possible) :
 
 | Motif | Remplacé par |
 |---|---|
-| `sk-…` | `[SECRET:OPENAI_KEY]` |
-| `sk-ant-…` | `[SECRET:ANTHROPIC_KEY]` |
-| `ghp_…`, `gho_…`, `github_pat_…` | `[SECRET:GH_PAT]`, `[SECRET:GH_OAUTH]`, `[SECRET:GH_FINE_PAT]` |
-| `xox[baprs]-…` | `[SECRET:SLACK_TOKEN]` |
-| `AKIA…` | `[SECRET:AWS_ACCESS_KEY]` |
-| `password|secret|pwd|token = …` | `[SECRET:REDACTED]` |
+| `sk-ant-…`, `sk-…` | `[SECRET:ANTHROPIC_KEY]`, `[SECRET:OPENAI_KEY]` |
+| bloc `-----BEGIN … PRIVATE KEY-----` | `[SECRET:PRIVATE_KEY]` |
+| JWT (`eyJ….eyJ….`) | `[SECRET:JWT]` |
+| `ghp_…`, `gho_…`, `github_pat_…`, `glpat-…`, `npm_…`, `AZDO…` | `[SECRET:GH_PAT]`, `[SECRET:GH_OAUTH]`, `[SECRET:GH_FINE_PAT]`, `[SECRET:GITLAB_PAT]`, `[SECRET:NPM_TOKEN]`, `[SECRET:AZURE_PAT]` |
+| `xox[baprs]-…`, webhook `hooks.slack.com/services/…` | `[SECRET:SLACK_TOKEN]`, `[SECRET:SLACK_WEBHOOK]` |
+| `sk_live_…`/`rk_test_…`, `AIza…`, `SG.…` | `[SECRET:STRIPE_KEY]`, `[SECRET:GOOGLE_API_KEY]`, `[SECRET:SENDGRID_KEY]` |
+| `AKIA…`, `aws_secret_access_key = …` | `[SECRET:AWS_ACCESS_KEY]`, `[SECRET:AWS_SECRET]` |
+| `postgres://`, `mysql://`, `mongodb://`, `redis://`, `amqp://` | `[SECRET:CONNECTION_STRING]` |
+| `schéma://user:pass@hôte` | `[SECRET:CREDENTIALS]` |
+| `Bearer …`, `Basic …` | `[SECRET:TOKEN]` |
+| `password|secret|passwd|pwd|token = …` | `[SECRET:REDACTED]` |
+| `mot de passe|clé d'api|jeton|identifiant secret = …` | `[SECRET:REDACTED]` |
+
+**Idempotence et type.** Un marqueur déjà posé n'est jamais re-masqué : chaque
+motif est appliqué uniquement **hors** des `[SECRET:…]` présents (découpe par
+`split`, recollage tel quel). Deux conséquences vérifiées par les tests :
+passer deux fois ne change rien, et un marqueur typé ne se dégrade pas en
+marqueur générique (`token = [SECRET:GH_PAT]` reste `[SECRET:GH_PAT]`). Les
+motifs sont ordonnés du plus spécifique au plus large pour la même raison : un
+format reconnu garde son type plutôt que de finir en `[SECRET:REDACTED]`.
 
 Le masquage est appliqué **à la collecte**, donc aussi avant l'écriture en
 base : un secret n'entre ni dans le brief servi, ni dans `brief.content_md`.
+Comme lecture et écriture utilisent les mêmes motifs, un secret refusé à
+l'entrée est refusé à la sortie — et inversement.
+
+Ajouter un motif se fait **uniquement** dans `src/security/secretPatterns.ts`,
+avec son test : il s'appliquera alors aux deux chemins.
 
 ### 3.4 Droits de l'utilisateur
 
