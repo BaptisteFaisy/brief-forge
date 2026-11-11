@@ -58,11 +58,10 @@ modules:
       function: get-work-brief-fn
       actionVerb: GET
       description: |
-        Renvoie le brief de contexte d'un ticket Jira : objectif, critères
-        d'acceptation, décisions applicables, tentatives passées, changements
-        voisins, contraintes, leçons, personnes à contacter, trous et sources.
-        Chaque élément porte une source et une date. Le budget s / m / l
-        borne la taille du texte ; le brief dit toujours ce qu'il a écarté.
+        Brief de contexte du ticket : objectif, critères, décisions, tentatives
+        passées, changements voisins, contraintes, leçons, contacts, trous,
+        sources. Chaque élément porte source et date. Budget s/m/l ; le brief
+        dit ce qu'il a écarté.
       inputs:
         issueKey:
           title: Issue key
@@ -109,10 +108,9 @@ modules:
       function: get-rel-decisions-fn
       actionVerb: GET
       description: |
-        Renvoie les décisions applicables au ticket : décision, date, auteur et
-        lien. Les décisions de plus de 18 mois sont marquées « ancienne, à
-        confirmer ». En cas de contradiction, les deux sont citées et le trou
-        correspondant est signalé.
+        Décisions applicables : texte, date, auteur, lien. Plus de 18 mois =
+        « ancienne, à confirmer ». En cas de contradiction, les deux sont
+        citées et le trou est signalé.
       inputs:
         issueKey:
           title: Issue key
@@ -125,8 +123,8 @@ modules:
       function: get-failed-attempts-fn
       actionVerb: GET
       description: |
-        Renvoie les tentatives passées sur ce ticket et la raison de leur
-        échec, pour ne pas repeating une approche déjà refusée.
+        Tentatives passées sur ce ticket et raison de chaque échec, pour ne pas
+        rejouer une approche déjà refusée.
       inputs:
         issueKey:
           title: Issue key
@@ -187,10 +185,9 @@ modules:
       function: post-work-report-fn
       actionVerb: CREATE
       description: |
-        Enregistre le compte rendu de l'agent dans le ticket : statut, fait,
-        non fait, critères couverts, hypothèses, tests lancés. Le compte rendu
-        est posté en commentaire signé et conservé dans une propriété du
-        ticket.
+        Enregistre le compte rendu de l'agent : statut, fait, non fait, critères
+        couverts, hypothèses, tests. Posté en commentaire signé et conservé
+        dans une propriété du ticket.
       inputs:
         issueKey:
           title: Issue key
@@ -425,15 +422,15 @@ permissions:
   # enregistrées : aucune sortie réseau hors Atlassian.
 
 app:
-  id: ari:cloud:ecosystem::app/8b1f6d2c-4a77-4f0e-9c31-2d6f5a7b91e4
+  runtime:
+    name: nodejs24.x
+    memoryMB: 1024
+    architecture: arm64
+  id: ari:cloud:ecosystem::app/08a89a5d-94d0-448f-8c1a-70f938b2c3a8
   name: Brief de contexte
   description: >-
     Transforme un ticket Jira en brief de contexte court, sourcé et daté pour
     un agent de code, puis reçoit son compte rendu.
-  version:
-    major: 1
-    minor: 0
-    patch: 0
 
 # ------------------------------------------------------------------ ressources
 # CLI >= 15 : les ressources sont une section racine (plus `modules.resource`).

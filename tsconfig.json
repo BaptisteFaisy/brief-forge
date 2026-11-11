@@ -11,7 +11,11 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "declaration": false,
-    "noEmit": true,
+    // `noEmit` reste à false : le bundler Forge (ts-loader) a besoin que le
+    // compilateur émette. Le contrôle de type local passe par `npm run build`.
+    "noEmit": false,
+    "outDir": "dist",
+    "sourceMap": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
