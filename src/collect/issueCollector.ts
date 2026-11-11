@@ -11,6 +11,7 @@
  */
 
 import { MAX_COMMENTS_FOR_DECISION_SCAN } from '../config';
+import { sanitizeTicketContent } from '../security';
 import { BriefError, PermissionDeniedError } from '../util/errors';
 import {
   createConfluenceClient,
@@ -38,6 +39,7 @@ import {
   parseDevStatusChanges,
   parseNeighborChanges,
 } from './teamworkGraphClient';
+import { citableComments } from './visibility';
 import type {
   ConfluenceClient,
   DecisionRecord,
@@ -100,11 +102,23 @@ export function graphTransport(): GraphTransport {
 }
 
 /* ------------------------------------------------------------------ *
- * Filtrage des commentaires
+ * Filtrage des commentaires et décisions en commentaire
  * ------------------------------------------------------------------ */
 
-const DECISION_MARKER =
-  /\[(décision|decision|adr)\]|(^|\s)(décision|decision|adr)\s*:|on a (choisi|décidé|retenu)|nous avons (choisi|décidé|retenu)/i;
+/** Vocabulaire des marqueurs de décision : partagé par la détection et le titre. */
+const DECISION_WORDS = 'décision|decision|adr';
+
+const DECISION_MARKER = new RegExp(
+  `\\[(?:${DECISION_WORDS})\\]|(?:^|\\s)(?:${DECISION_WORDS})\\s*:|` +
+    'on a (?:choisi|décidé|retenu)|nous avons (?:choisi|décidé|retenu)',
+  'i'
+);
+
+/** Marqueur placé en tête de commentaire : il ne fait pas partie du titre. */
+const LEADING_DECISION_MARKER = new RegExp(
+  `^\\s*(?:\\[(?:${DECISION_WORDS})\\]|(?:${DECISION_WORDS})\\s*:)\\s*`,
+  'i'
+);
 
 export function isDecisionComment(body: string): boolean {
   return DECISION_MARKER.test(body);
@@ -178,13 +192,31 @@ async function safeFieldNames(jira: JiraClient): Promise<Record<string, string>>
 }
 
 /* ------------------------------------------------------------------ *
- * Décisions Confluence
+ * Décisions applicables : pages Confluence + commentaires marqués
  * ------------------------------------------------------------------ */
 
+/**
+ * Décisions applicables au ticket (cahier des charges § 7.1, rang 3) :
+ * les pages Confluence étiquetées `decision`/`adr` liées au ticket ou à
+ * l'épopée, **et** les commentaires marqués comme décision. Les deux sources
+ * sont fusionnées, sans doublon, la plus récente d'abord : une panne de
+ * Confluence ne fait donc pas disparaître les décisions prises en commentaire.
+ */
 export async function collectDecisions(
   issue: IssueSnapshot,
   settings: ProjectSettings,
   deps: CollectDeps = {}
+): Promise<DecisionRecord[]> {
+  const fromComments = decisionsFromComments(issue);
+  const fromPages = await confluenceDecisions(issue, settings, deps);
+  return mergeDecisions([...fromPages, ...fromComments]);
+}
+
+/** Pages Confluence étiquetées : lecture optionnelle (§ 4.1). */
+async function confluenceDecisions(
+  issue: IssueSnapshot,
+  settings: ProjectSettings,
+  deps: CollectDeps
 ): Promise<DecisionRecord[]> {
   const labels =
     settings.decisionLabels.length > 0 ? settings.decisionLabels : DEFAULT_DECISION_LABELS;
@@ -197,6 +229,80 @@ export async function collectDecisions(
     if (isConfluenceUnavailable(error)) return [];
     throw error;
   }
+}
+
+/**
+ * Commentaires marqués comme décision (`isDecisionComment`, la même règle que
+ * le filtrage des candidats) transformés en `DecisionRecord`. Les commentaires
+ * à visibilité restreinte sont exclus : rien d'eux ne doit entrer dans le brief.
+ */
+export function decisionsFromComments(issue: IssueSnapshot): DecisionRecord[] {
+  return citableComments(issue.comments)
+    .filter((comment) => isDecisionComment(comment.body))
+    .map((comment) => commentDecision(issue.issueKey, comment))
+    .filter((decision): decision is DecisionRecord => decision !== undefined);
+}
+
+/**
+ * Une décision de commentaire : titre = première ligne utile (marqueur retiré),
+ * corps = les lignes suivantes, déjà nettoyées par la collecte puis re-nettoyées
+ * ici (le snapshot peut venir d'ailleurs). Source et date viennent du
+ * commentaire ; l'URL est l'ancre Jira du commentaire.
+ */
+function commentDecision(
+  issueKey: string,
+  comment: IssueComment
+): DecisionRecord | undefined {
+  const body = sanitizeTicketContent(
+    comment.body,
+    comment.author,
+    comment.createdAt || 'date non précisée'
+  );
+  const lines = body
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line !== '');
+  const title = (lines[0] ?? '').replace(LEADING_DECISION_MARKER, '').trim();
+  if (title === '') return undefined;
+  return {
+    title,
+    url: commentUrl(issueKey, comment.id),
+    date: comment.createdAt,
+    author: comment.author,
+    body: lines.slice(1).join('\n'),
+  };
+}
+
+/** Lien du commentaire : l'ancre Jira sur le ticket, à défaut le ticket. */
+function commentUrl(issueKey: string, commentId: string): string {
+  return commentId === ''
+    ? `/browse/${issueKey}`
+    : `/browse/${issueKey}?focusedCommentId=${commentId}`;
+}
+
+/**
+ * Fusionne les décisions des deux sources : un même auteur, une même date et un
+ * même texte ne font qu'une entrée ; le résultat est trié du plus récent au plus
+ * ancien (tri stable : deux décisions de même date gardent l'ordre des sources).
+ */
+export function mergeDecisions(decisions: DecisionRecord[]): DecisionRecord[] {
+  const seen = new Set<string>();
+  return decisions
+    .filter((decision) => {
+      const key = decisionKey(decision);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((left, right) => right.date.localeCompare(left.date));
+}
+
+function decisionKey(decision: DecisionRecord): string {
+  const text = `${decision.title} ${decision.body}`
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+  return `${decision.author}|${decision.date}|${text}`;
 }
 
 /* ------------------------------------------------------------------ *

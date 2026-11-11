@@ -133,6 +133,49 @@ describe('teamworkGraphClient — repli information de développement', () => {
     expect(changes[1].title).toBe('fix: en-têtes CSV');
   });
 
+  it('lit aussi les commits rangés sous `commits.detail[].repositories[]` (réponse réelle API)', () => {
+    const payload = {
+      pullRequests: {
+        detail: [
+          {
+            pullRequests: [
+              {
+                name: 'PR-1',
+                url: 'https://exemple.atlassian.net/pr/1',
+                status: 'MERGED',
+                lastUpdate: '2026-03-01T10:00:00.000Z',
+                author: { name: 'dana' },
+              },
+            ],
+          },
+        ],
+      },
+      commits: {
+        detail: [
+          {
+            repositories: [
+              {
+                commits: [
+                  {
+                    message: 'fix: échappement virgules',
+                    url: 'https://exemple.atlassian.net/commit/def',
+                    authorTimestamp: '2026-02-28T08:00:00.000Z',
+                    author: { displayName: 'eli' },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const changes = parseDevStatusChanges(payload);
+    expect(changes.map((change) => [change.kind, change.title, change.author])).toEqual([
+      ['pull-request', 'PR-1', 'dana'],
+      ['commit', 'fix: échappement virgules', 'eli'],
+    ]);
+  });
+
   it('tolère une charge vide', () => {
     expect(parseDevStatusChanges({})).toEqual([]);
     expect(parseDevStatusChanges(null)).toEqual([]);

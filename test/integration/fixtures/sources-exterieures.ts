@@ -97,7 +97,7 @@ const FIXTURE_23 = baseFixture({
   outages: ['confluence'],
   decisions: mixedDecisions,
   expected: expected({
-    mustAppear: ['luc'],
+    mustAppear: ['luc', 'limiter la taille du lot à 250'],
     mustNotAppear: ['ADR-060'],
   }),
 });

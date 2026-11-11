@@ -189,6 +189,14 @@ export function expected(overrides: Partial<ExpectedOutcome> = {}): Partial<Expe
 
 const CRITERIA_FIELD_HINT = /crit[eè]res?|acceptance|definition of done/i;
 
+/**
+ * Marqueur de décision dans un commentaire : règle **réexprimée** ici (comme le
+ * veut l'en-tête de ce fichier) pour dériver l'attendu des graines, sans appeler
+ * le code sous test.
+ */
+const DECISION_COMMENT_MARKER =
+  /\[(décision|decision|adr)\]|(^|\s)(décision|decision|adr)\s*:|on a (choisi|décidé|retenu)|nous avons (choisi|décidé|retenu)/i;
+
 /** Critères portés par un champ personnalisé déclaré (une puce = un critère). */
 function criteriaFromCustomFields(fixture: FixtureSpec): number {
   const field = (fixture.customFields ?? []).find((candidate) =>
@@ -206,14 +214,29 @@ export function criteriaCountOf(fixture: FixtureSpec): number {
   return fromField > 0 ? fromField : criteriaFromCustomFields(fixture);
 }
 
-/** Décisions réellement citables : pages Confluence, hors panne et hors étiquette. */
+/**
+ * Décisions réellement citables : pages Confluence (hors panne, hors étiquette)
+ * **et** commentaires marqués comme décision (§ 7.1, rang 3). Un commentaire à
+ * visibilité restreinte est exclu du brief, donc du compte.
+ */
 export function decisionsCountOf(fixture: FixtureSpec): number {
-  if ((fixture.outages ?? []).includes('confluence')) return 0;
+  const fromComments = commentDecisionsCountOf(fixture);
+  if ((fixture.outages ?? []).includes('confluence')) return fromComments;
   const labels = fixture.decisionLabels ?? fixture.settings?.decisionLabels ?? ['decision', 'adr'];
-  return (fixture.decisions ?? [])
+  const fromConfluence = (fixture.decisions ?? [])
     .filter((seed) => seed.via === 'confluence')
     .filter((seed) => (seed.labels ?? ['decision']).some((label) => labels.includes(label)))
     .length;
+  return fromConfluence + fromComments;
+}
+
+/** Commentaires de décision semés : graines `via: 'comment'` + commentaires marqués. */
+function commentDecisionsCountOf(fixture: FixtureSpec): number {
+  const seeded = (fixture.decisions ?? []).filter((seed) => seed.via === 'comment').length;
+  const marked = (fixture.comments ?? []).filter(
+    (seed) => seed.visibility !== 'restricted' && DECISION_COMMENT_MARKER.test(seed.body)
+  ).length;
+  return seeded + marked;
 }
 
 /** Trous attendus, déduits de ce que la graine ne fournit pas. */

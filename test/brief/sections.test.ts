@@ -61,6 +61,26 @@ describe('sections — interlocuteurs, trous et sources', () => {
     expect(list.find((contact) => contact.name === 'amina')?.date).toBe(OLD_DATE);
   });
 
+  it('tient hors des interlocuteurs un commentaire à visibilité restreinte', () => {
+    const fixture = makeFixture({
+      issue: {
+        comments: [
+          { id: 'c1', author: 'luc', createdAt: RECENT_DATE, body: 'Je prends le ticket.' },
+          {
+            id: 'c2',
+            author: 'juridique',
+            createdAt: RECENT_DATE,
+            body: 'Note interne confidentielle sur ce client.',
+            visibility: 'restricted',
+          },
+        ],
+      },
+    });
+    const names = contacts(toInput(fixture)).map((contact) => contact.name);
+    expect(names).toContain('luc');
+    expect(names).not.toContain('juridique');
+  });
+
   it('signale les trous quand une donnée manque, sans la combler', () => {
     const fixture = makeFixture({
       issue: { acceptanceCriteria: [], assignee: '', components: [] },
