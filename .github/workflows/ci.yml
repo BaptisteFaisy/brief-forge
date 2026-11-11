@@ -1,12 +1,14 @@
 name: CI
 
-# CI générique pour un dépôt de thèses/docs : contrôles rapides, stdlib
-# uniquement, verdict en quelques secondes. Le check publié s'appelle `ci`
-# (c'est le nom du job qui nomme le check) : il est exigé par le ruleset de
-# `main` et par la file Mergify, comme `ci-budget` et `couche0`.
+# CI du projet « brief-forge » (app Forge + serveur MCP).
+#
+# Le check publié s'appelle `ci` : il est exigé par le ruleset de `main` et
+# par la file Mergify, comme `ci-budget` et `couche0`.
+# Budget : verdict en 5 minutes au plus (règle CI maison) — installation
+# des dépendances (cache npm), typage TypeScript, tests Jest, tests des
+# gardes CI.
 on:
   pull_request:
-  # File de merge : même contrôle sur le commit temporaire du groupe.
   merge_group:
   workflow_dispatch:
 
@@ -29,14 +31,9 @@ jobs:
           persist-credentials: false
           clean: false
 
-      # Runners self-hosted persistants : un sous-dossier parasite d'un run
-      # précédent peut survivre et fausser le sanity docs (flaky constaté sur
-      # les dépôts frères). Nettoyage complet du workspace — pas de sorties
-      # de build à préserver sur ce dépôt docs ; si un jour il y a des
-      # builds, exclure leurs dossiers ici comme vision (`-e`).
       - name: Nettoyage du workspace
         shell: bash
-        run: git clean -ffdx
+        run: git clean -ffdx -e /node_modules
 
       - name: Sanity docs (UTF-8, non vides)
         run: |
@@ -48,6 +45,8 @@ jobs:
           for racine in racines:
               for f in sorted(racine.rglob("*")):
                   if ".git/" in f.as_posix() or f.suffix.lower() not in exts:
+                      continue
+                  if "node_modules/" in f.as_posix():
                       continue
                   total += 1
                   try:
@@ -64,6 +63,22 @@ jobs:
               print("::error::document vide : %s" % f)
           raise SystemExit(1 if (illisibles or vides) else 0)
           EOF
+
+      # Node est déjà installé sur le runner self-hosted (R630) : pas de
+      # `actions/setup-node`, qui téléchargerait la toolchain à chaque run et
+      # ferait dépasser le budget de 5 minutes. Le cache npm de la machine est
+      # réutilisé (`--prefer-offline`).
+      - name: Node (version du runner)
+        run: node --version
+
+      - name: Installation des dépendances
+        run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: Typage (tsc --noEmit)
+        run: npx tsc --noEmit
+
+      - name: Tests unitaires (jest)
+        run: npx jest --ci --silent
 
       # Les gardes de la CI se testent elles-mêmes : couche0 + agents
       # fireworks — stdlib, quelques secondes, aucun réseau.

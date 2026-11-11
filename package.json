@@ -1,0 +1,39 @@
+{
+  "name": "brief-forge",
+  "version": "0.1.0",
+  "description": "Forge app + MCP server: sourced, budgeted context briefs for coding agents, built from Jira tickets (Codegeist 2026).",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "forge",
+    "atlassian",
+    "jira",
+    "mcp",
+    "rovo",
+    "codegeist"
+  ],
+  "author": "BaptisteFaisy",
+  "license": "MIT",
+  "dependencies": {
+    "@forge/api": "^8.5.0",
+    "@forge/resolver": "^2.0.2",
+    "@forge/sql": "^4.0.10",
+    "@forge/storage": "^2.0.3",
+    "@forge/ui": "^1.11.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.3.3",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.4.0"
+  }
+}
