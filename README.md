@@ -12,11 +12,14 @@ It turns a Jira ticket into a **compact, source-cited brief** that a coding
 agent can consume safely, then **receives the agent's work report back** — so
 every pass enriches the context of the next one.
 
-> ⚠️ **Prototype status.** The shared core (types, budgets, security
-> primitives, utilities) and the full documentation are in place; feature
-> modules are being implemented against `docs/CONTRACT.md` on the roadmap in
-> `docs/ROADMAP.md`. See [Known limitations](#known-limitations) for an honest
-> list of what is not covered yet.
+> ⚠️ **Status: implemented and tested, not yet deployed.** Every module of the
+> spec is coded and covered by tests (676 Jest tests green, `tsc --noEmit`
+> clean, `forge lint` 0 errors), and brief fidelity is measured on 30 simulated
+> tickets — see [`docs/FIDELITY-REPORT.md`](docs/FIDELITY-REPORT.md). What has
+> **not** happened yet: `forge register` / `deploy` / `install` on a real
+> Atlassian site, and the five live validations of the spec. The runbook is
+> [`docs/DEPLOY.md`](docs/DEPLOY.md); the honest gap list is
+> [Known limitations](#known-limitations).
 
 ---
 
@@ -164,9 +167,11 @@ Honest list for a hackathon prototype:
 - **Injection screening is best-effort.** Rules + model catch known patterns;
   a determined, obfuscated instruction can still slip through. The quoted-data
   framing and the human reviewer are the last lines of defense.
-- **Secret masking covers common formats only** (OpenAI/Anthropic keys, GitHub
-  PATs, Slack tokens, AWS keys, `password=`-style assignments). An exotic
-  secret will pass through.
+- **Secret masking covers 21 known formats** (OpenAI/Anthropic keys, GitHub
+  PATs, Slack tokens, AWS keys, JWTs, PEM private keys, connection strings,
+  `user:pass@` URLs, `password=`-style assignments…). The same pattern set is
+  applied on the read path (brief) and the write path (reports). An exotic
+  secret will still pass through.
 - **Token counting is heuristic** (1 token ≈ 4 chars, ±10 % tolerance): budget
   `s` means ≤ 1 100 tokens, not an exact count.
 - **Readiness scoring is a weighted heuristic**, not a measurement of truth.
@@ -174,7 +179,15 @@ Honest list for a hackathon prototype:
   trigger volume and queue throughput.
 - **Agent identity is declarative** in `claim-work`: the claim reserves the
   issue, it does not authenticate the agent.
-- Validated on a single demo site (project `PAY`, ticket `PAY-123`).
+- **Never deployed to a real Atlassian site yet.** All behaviour is validated
+  by 676 unit/integration tests against a simulated Jira, Confluence and
+  Teamwork Graph (30 fixtures, 90 briefs measured — see
+  [`docs/FIDELITY-REPORT.md`](docs/FIDELITY-REPORT.md)). The five live
+  validations of the spec are still to be run: see
+  [`docs/DEPLOY.md`](docs/DEPLOY.md) § 7.
+- **LLM condensation is not wired to a live model.** Without a model the
+  condenser returns the source text unchanged (sources and dates preserved), so
+  briefs are faithful but less compact than they could be.
 
 ## Repository layout
 

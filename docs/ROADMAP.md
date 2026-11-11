@@ -18,26 +18,48 @@
 | Documentation complète : README, ARCHITECTURE, SECURITY, JUDGE-INSTRUCTIONS, VIDEO-SCRIPT, ROADMAP, RECETTE | écrit (ce lot) |
 | `package.json`, `tsconfig.json`, `jest.config.js` | écrit |
 
-### En cours (au 11 novembre)
+### Fait aussi (même journée, lots suivants)
 
-Les modules métier sont implémentés en parallèle contre le contrat :
+Tous les modules métier sont **implémentés, testés et mergés** sur `main` :
 
-- `src/collect/` — collecte Jira / Confluence / Teamwork Graph
-- `src/brief/` — sections, budget, condensation, assemblage
-- `src/readiness/` — score de préparation
-- `src/storage/` — DDL + accès aux 8 tables
-- `src/security/` — couche complète (règles + modèle + permissions)
-- `src/actions/` — 11 handlers MCP
-- `src/events/` — 4 triggers + consumer
-- `src/ui/` — 3 écrans Jira
-- `src/index.ts` + `manifest.yml` + skills
+- `src/collect/` — collecte Jira / Confluence / Teamwork Graph, avec replis
+  (Confluence indisponible, graphe indisponible → information de développement
+  Jira), commentaires à visibilité restreinte exclus du brief et du score,
+  décisions lues dans Confluence **et** dans les commentaires marqués ;
+- `src/brief/` — 10 sections dans l'ordre du § 7.1, budgets `s`/`m`/`l` tenus à
+  ±10 %, troncature qui nomme l'outil de suite, source + date par élément ;
+- `src/readiness/` — 7 critères, seuils 70/40, chaque point perdu expliqué ;
+- `src/storage/` — DDL idempotent des 8 tables + dépôts (Forge SQL) ;
+- `src/security/` — règles d'injection puis contrôle par modèle, citation des
+  blocs tiers, garde d'accès au nom de l'utilisateur appelant, **21 motifs de
+  secrets appliqués sur la lecture comme sur l'écriture** (BC-11) ;
+- `src/actions/` — les 11 outils MCP (7 GET, 4 écritures bornées) ;
+- `src/events/` — 4 triggers Jira + file + consumer des trois budgets ;
+- `src/ui/` — 3 écrans Jira + aide à la connexion, bilingues FR/EN, et le point
+  d'entrée UI Kit `src/ui/frontend.tsx` ;
+- `manifest.yml` — passé au linter officiel `@forge/lint` : **0 erreur**,
+  1 avertissement non bloquant (`teamwork-graph-scopes`) ;
+- `skills/work-brief/` + `public-skill/SKILL.md` ;
+- `docs/DEPLOY.md` + `scripts/deploy-check.sh` (9 contrôles hors ligne) ;
+- `test/integration/` — faux Jira / Confluence / Teamwork Graph, **30 fixtures**
+  (cas limites du § 17 et scénarios du § 19), 10 indicateurs de fidélité mesurés
+  sur 90 briefs : `docs/FIDELITY-REPORT.md`.
 
-### Pas encore commencé
+Vérifications sur `main` : `tsc --noEmit` vert, **676 tests Jest verts**,
+`npm run fidelity` vert, budget CI de 5 min respecté.
 
-- Tests d'intégration bout en bout sur un site de démo réel
-- Vidéo et captures d'écran
-- Déploiement sur le site de soumission
-- Revue de sécurité interne
+### Pas encore commencé (exige un compte et un site Atlassian)
+
+- `forge register` / `deploy` / `install` sur un site réel — runbook écrit dans
+  `docs/DEPLOY.md`, jamais exécuté faute d'identifiants ;
+- les 5 validations réelles du § 15 (client MCP externe, identité en appel
+  externe, état « refusée » d'une PR dans le graphe, durée d'un brief `l`,
+  lecture Confluence depuis l'app Jira) — protocoles écrits, à jouer en direct ;
+- vidéo de 5 minutes et captures d'écran (script minuté dans `docs/VIDEO-SCRIPT.md`) ;
+- dépôt Devpost et listing Marketplace ;
+- mesure de fidélité sur **30 tickets réels** (le jeu actuel est simulé :
+  l'exigence « zéro décision inventée » du § 16 reste à confirmer sur données
+  vivantes).
 
 ## 2. Jalons
 
