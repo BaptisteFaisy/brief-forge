@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Redirection…</title>
+  <meta name="robots" content="noindex">
+  <script>
+    // GitHub Pages serves this page at the requested URL. Redirect to the SPA
+    // root while preserving any query string and hash.
+    (function () {
+      var path = location.pathname;
+      var top = path.replace(/\/[^/]*$/, '') || '/';
+      var target = top.replace(/\/$/, '') + '/index.html' + location.search + location.hash;
+      location.replace(target);
+    })();
+  </script>
+</head>
+<body>
+  <p>Redirection… <a href="./index.html">Continuer</a></p>
+</body>
+</html>

@@ -1,0 +1,59 @@
+name: pages
+
+# Site public statique (dossier `site/`) publié sur GitHub Pages.
+#
+# Aucun build : le site est en HTML/CSS/JS natif, sans dépendance ni CDN, et
+# ses données (`site/assets/data.json`) sont générées en amont par
+# `npm run site-data` puis versionnées — la publication ne recalcule rien.
+#
+# Budget CI (règle maison) : `timeout-minutes: 5` par job, `concurrency`,
+# `fetch-depth: 1`. Deux jobs courts (préparation de l'artefact, déploiement).
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build
+    runs-on: [self-hosted, linux, x64, brief-forge-worker]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          clean: false
+
+      - name: Configuration de Pages
+        uses: actions/configure-pages@v5
+
+      - name: Artefact du site (dossier site/)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: deploy
+    needs: build
+    runs-on: [self-hosted, linux, x64, brief-forge-worker]
+    timeout-minutes: 5
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publication sur GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

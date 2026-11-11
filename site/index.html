@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="brief-forge — briefs de contexte sourcés pour agents de code">
+  <title>brief-forge — briefs de contexte sourcés pour agents de code</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main" data-i18n="nav.skip"></a>
+
+  <header class="site-header">
+    <a class="brand" href="#hero">brief-forge</a>
+    <nav class="site-nav" data-i18n-aria="nav.label">
+      <a href="#hero" data-i18n="nav.hero"></a>
+      <a href="#demo" data-i18n="nav.demo"></a>
+      <a href="#readiness" data-i18n="nav.readiness"></a>
+      <a href="#security" data-i18n="nav.security"></a>
+      <a href="#fidelity" data-i18n="nav.fidelity"></a>
+      <a href="#architecture" data-i18n="nav.architecture"></a>
+      <a href="#judges" data-i18n="nav.judges"></a>
+      <a href="#links" data-i18n="nav.links"></a>
+      <button type="button" class="lang-btn" id="lang-toggle" data-i18n="lang.toggle"></button>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section id="hero" aria-labelledby="hero-title">
+      <p class="kicker" data-i18n="hero.kicker"></p>
+      <h1 id="hero-title" data-i18n="hero.title"></h1>
+      <p class="lead" data-i18n="hero.subtitle"></p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#demo" data-i18n="hero.cta.demo"></a>
+        <a class="btn" href="#judges" data-i18n="hero.cta.judges"></a>
+      </div>
+      <div class="what">
+        <h2 data-i18n="what.title"></h2>
+        <ul>
+          <li data-i18n="what.1"></li>
+          <li data-i18n="what.2"></li>
+          <li data-i18n="what.3"></li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="demo" aria-labelledby="demo-title">
+      <h2 id="demo-title" data-i18n="demo.title"></h2>
+      <p class="intro" data-i18n="demo.intro"></p>
+
+      <div class="demo-controls">
+        <label for="ticket-select" data-i18n="demo.ticket.label"></label>
+        <select id="ticket-select"></select>
+
+        <span class="control-spacer"></span>
+
+        <span id="budget-label" data-i18n="demo.budget.label"></span>
+        <div class="budget-tabs" id="budget-tabs" role="tablist" data-i18n-aria="demo.budget.label"></div>
+      </div>
+
+      <dl class="demo-meta" id="demo-meta"></dl>
+
+      <p class="data-warning" data-i18n="demo.dataWarning" role="note"></p>
+
+      <div class="brief-shell">
+        <div class="brief-toolbar">
+          <span class="live-badge" id="live-badge" hidden data-i18n="demo.liveBadge"></span>
+          <button type="button" class="btn btn-sm" id="copy-brief" data-i18n="demo.copy"></button>
+        </div>
+        <article class="brief-render" id="brief-panel" role="tabpanel" aria-labelledby="budget-tab-s">
+          <div id="brief-body"></div>
+        </article>
+        <p class="brief-truncated" id="brief-truncated" hidden></p>
+        <p class="brief-empty" id="brief-empty" hidden data-i18n="demo.empty"></p>
+      </div>
+    </section>
+
+    <section id="readiness" aria-labelledby="readiness-title">
+      <h2 id="readiness-title" data-i18n="readiness.title"></h2>
+      <p class="intro" data-i18n="readiness.intro"></p>
+      <div class="readiness-card" id="readiness-card" hidden>
+        <div class="readiness-head">
+          <span class="readiness-label" data-i18n="readiness.score"></span>
+          <span class="readiness-score" id="readiness-score">—</span>
+          <span class="readiness-badge" id="readiness-badge"></span>
+        </div>
+        <h3 data-i18n="readiness.gaps"></h3>
+        <ul class="readiness-gaps" id="readiness-gaps"></ul>
+        <h3 data-i18n="readiness.advice"></h3>
+        <p class="readiness-advice" id="readiness-advice"></p>
+      </div>
+    </section>
+
+    <section id="security" aria-labelledby="security-title">
+      <h2 id="security-title" data-i18n="security.title"></h2>
+      <p class="intro" data-i18n="security.intro"></p>
+      <div class="cards">
+        <article class="card">
+          <h3 data-i18n="security.citation"></h3>
+          <p data-i18n="security.citation.text"></p>
+        </article>
+        <article class="card">
+          <h3 data-i18n="security.masking"></h3>
+          <p data-i18n="security.masking.text"></p>
+        </article>
+        <article class="card">
+          <h3 data-i18n="security.injection"></h3>
+          <p data-i18n="security.injection.text"></p>
+        </article>
+      </div>
+      <div class="evidence">
+        <p class="evidence-label" data-i18n="security.evidence"></p>
+        <div class="evidence-grid">
+          <figure>
+            <figcaption data-i18n="security.masking"></figcaption>
+            <pre class="evidence-block" id="evidence-secret"></pre>
+          </figure>
+          <figure>
+            <figcaption data-i18n="security.injection"></figcaption>
+            <pre class="evidence-block" id="evidence-inject"></pre>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section id="fidelity" aria-labelledby="fidelity-title">
+      <h2 id="fidelity-title" data-i18n="fidelity.title"></h2>
+      <p class="intro" data-i18n="fidelity.intro"></p>
+      <div class="metrics">
+        <div class="metric"><span class="metric-value" id="f-metric-fix">—</span><span class="metric-label" data-i18n="fidelity.tickets"></span></div>
+        <div class="metric"><span class="metric-value" id="f-metric-bud">—</span><span class="metric-label" data-i18n="fidelity.budgets"></span></div>
+        <div class="metric"><span class="metric-value" id="f-metric-briefs">—</span><span class="metric-label" data-i18n="fidelity.briefs"></span></div>
+        <div class="metric"><span class="metric-value" id="f-metric-exported">—</span><span class="metric-label" data-i18n="fidelity.exported"></span></div>
+      </div>
+      <a class="btn" href="https://github.com/BaptisteFaisy/brief-forge/blob/main/docs/FIDELITY-REPORT.md" data-i18n="fidelity.report"></a>
+    </section>
+
+    <section id="architecture" aria-labelledby="arch-title">
+      <h2 id="arch-title" data-i18n="arch.title"></h2>
+      <p class="intro" data-i18n="arch.intro"></p>
+      <ol class="arch-flow" id="arch-flow"></ol>
+      <p class="arch-loop" id="arch-loop"></p>
+    </section>
+
+    <section id="judges" aria-labelledby="judges-title">
+      <h2 id="judges-title" data-i18n="judges.title"></h2>
+      <p class="intro" data-i18n="judges.intro"></p>
+
+      <div class="judge-level">
+        <h3 data-i18n="judges.level1"></h3>
+        <p data-i18n="judges.level1.prompt"></p>
+        <ol>
+          <li data-i18n="judges.level1.q1"></li>
+          <li data-i18n="judges.level1.q2"></li>
+          <li data-i18n="judges.level1.q3"></li>
+        </ol>
+      </div>
+
+      <div class="judge-level">
+        <h3 data-i18n="judges.level2"></h3>
+        <p data-i18n="judges.level2.intro"></p>
+        <p class="cmd-label" data-i18n="judges.level2.cc"></p>
+        <pre class="cmd" id="judge-cmd-cc"></pre>
+        <button type="button" class="btn btn-sm" id="copy-cc" data-i18n="judges.copy"></button>
+        <p class="cmd-label" data-i18n="judges.level2.cursor"></p>
+        <pre class="cmd" id="judge-cmd-cursor"></pre>
+        <button type="button" class="btn btn-sm" id="copy-cursor" data-i18n="judges.copy"></button>
+      </div>
+    </section>
+
+    <section id="links" aria-labelledby="links-title">
+      <h2 id="links-title" data-i18n="links.title"></h2>
+      <ul class="links">
+        <li><a href="https://github.com/BaptisteFaisy/brief-forge" data-i18n="links.repo"></a></li>
+        <li><a href="https://github.com/BaptisteFaisy/brief-forge/tree/main/docs" data-i18n="links.docs"></a></li>
+        <li><a href="https://developer.atlassian.com/platform/forge/" data-i18n="links.console"></a></li>
+        <li><a href="https://mcp.atlassian.com/forge/08a89a5d-94d0-448f-8c1a-70f938b2c3a8" data-i18n="links.mcp"></a></li>
+        <li><a href="https://one-atlas-cndz.atlassian.net" data-i18n="links.site"></a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p data-i18n="footer.built"></p>
+  </footer>
+
+  <noscript>
+    <p>Ce site a besoin de JavaScript pour charger et rendre les briefs depuis assets/data.json. — This site needs JavaScript to load and render briefs from assets/data.json.</p>
+  </noscript>
+
+  <script type="module" src="assets/app.js"></script>
+</body>
+</html>
