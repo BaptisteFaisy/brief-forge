@@ -1,6 +1,8 @@
 # brief-forge
 
 > **Sourced, budgeted context briefs for coding agents — straight from Jira.**
+>
+> 🔗 **Live demo (no Atlassian account needed):** https://baptistefaisy.github.io/brief-forge/ — a real brief produced by the deployed app, plus 12 simulated tickets across the three token budgets.
 
 Serveur MCP Forge : briefs sourcés pour agents de code à partir de tickets Jira (Codegeist 2026).
 
