@@ -177,7 +177,9 @@ App créée, déployée et installée **pour de vrai** — pas une simulation :
 | App | `Brief de contexte` — id `ari:cloud:ecosystem::app/08a89a5d-94d0-448f-8c1a-70f938b2c3a8` |
 | Developer Space | `laddition` (`abf72fff-edaf-4259-900c-743702f0d1f2`) |
 | Site | `one-atlas-cndz.atlassian.net` (site de démo gratuit, 90 jours) |
-| Environnement | `development`, version déployée 3.x |
+| Environnements | `development` (v3.x) **et** `production` (v2.0.0), tous deux *Up-to-date* |
+| Éligibilité | **Runs on Atlassian : éligible** (`forge eligibility`) |
+| Endpoint MCP | `https://mcp.atlassian.com/forge/08a89a5d-94d0-448f-8c1a-70f938b2c3a8` — répond `401` + `WWW-Authenticate: Bearer resource_metadata="…/.well-known/oauth-protected-resource/forge/08a89a5d-…"`, soit un serveur MCP **publié et conforme OAuth 2.1** |
 | Installations | Jira `006c9f44-3274-4556-b104-642e27cb0b95`, Confluence `420a70dd-f54d-4836-929a-c1f20e1e2ff9` |
 | Console | https://developer.atlassian.com/console/myapps/08a89a5d-94d0-448f-8c1a-70f938b2c3a8 |
 
@@ -191,7 +193,13 @@ forge-atlassian lint -e development               # 0 erreur, 1 warning (teamwor
 forge-atlassian deploy -e development --non-interactive --approve MAJOR_VERSION_RULE
 forge-atlassian install -e development -p jira       -s one-atlas-cndz.atlassian.net --non-interactive --confirm-scopes
 forge-atlassian install -e development -p confluence -s one-atlas-cndz.atlassian.net --non-interactive --confirm-scopes
-forge-atlassian install list                      # les 2 installations, Up-to-date
+forge-atlassian install list                      # 4 installations (dev + prod, Jira + Confluence)
+
+# Environnement de production (celui qui sera soumis) :
+forge-atlassian deploy -e production --non-interactive
+forge-atlassian install -e production -p jira       -s one-atlas-cndz.atlassian.net --non-interactive --confirm-scopes
+forge-atlassian install -e production -p confluence -s one-atlas-cndz.atlassian.net --non-interactive --confirm-scopes
+forge-atlassian eligibility                         # Runs on Atlassian
 forge-atlassian logs -e development -n 50         # journaux runtime
 ```
 
@@ -253,6 +261,19 @@ retirer la sonde d'un environnement, redéployer depuis `main` puis
 Remplacez `<appId>` par l'UUID présent dans `manifest.yml` et `<TICKET>` par un ticket de test (ex. `PAY-123`).
 
 ### (a) Connexion réelle de Claude Code et Cursor
+
+**Déjà prouvé sans navigateur (11/11)** : le point d'accès MCP de l'app existe et
+négocie correctement. `POST https://mcp.atlassian.com/forge/<appId>` répond
+`401 invalid_token` avec l'en-tête
+`WWW-Authenticate: Bearer resource_metadata="https://mcp.atlassian.com/.well-known/oauth-protected-resource/forge/<appId>"`,
+et ce document de métadonnées expose le serveur d'autorisation
+(`https://auth.atlassian.com/<realm>`), `bearer_methods_supported: ["header"]`
+et les scopes (`read:jira-work`, `write:jira-work`, scopes Confluence…). C'est
+exactement le contrat OAuth 2.1 attendu par un client MCP.
+
+**Reste à jouer dans un navigateur** : le consentement de l'utilisateur, et
+l'activation de l'exposition externe par l'administrateur si le site l'exige.
+
 
 **Protocole :**
 1. **Claude Code (CLI)** — exécutez :

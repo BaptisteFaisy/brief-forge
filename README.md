@@ -12,14 +12,17 @@ It turns a Jira ticket into a **compact, source-cited brief** that a coding
 agent can consume safely, then **receives the agent's work report back** — so
 every pass enriches the context of the next one.
 
-> ⚠️ **Status: implemented and tested, not yet deployed.** Every module of the
-> spec is coded and covered by tests (676 Jest tests green, `tsc --noEmit`
-> clean, `forge lint` 0 errors), and brief fidelity is measured on 30 simulated
-> tickets — see [`docs/FIDELITY-REPORT.md`](docs/FIDELITY-REPORT.md). What has
-> **not** happened yet: `forge register` / `deploy` / `install` on a real
-> Atlassian site, and the five live validations of the spec. The runbook is
-> [`docs/DEPLOY.md`](docs/DEPLOY.md); the honest gap list is
-> [Known limitations](#known-limitations).
+> ✅ **Status: deployed on a real Atlassian site.** The app (`08a89a5d-94d0-448f-
+> 8c1a-70f938b2c3a8`) is built, deployed to `development` **and** `production`,
+> and installed on Jira + Confluence of `one-atlas-cndz.atlassian.net`; it is
+> *Runs on Atlassian* eligible. Its MCP endpoint answers with a proper OAuth 2.1
+> challenge: `https://mcp.atlassian.com/forge/08a89a5d-94d0-448f-8c1a-70f938b2c3a8`.
+> Six defects were found **only** by deploying for real (they are fixed and
+> listed in [`docs/DEPLOY.md`](docs/DEPLOY.md)). Code: 690 Jest tests green,
+> `tsc --noEmit` clean, `forge lint` 0 errors; fidelity measured on 30 tickets ×
+> 3 budgets in [`docs/FIDELITY-REPORT.md`](docs/FIDELITY-REPORT.md). Still to be
+> played in a browser: the OAuth consent of a real MCP client and the admin
+> activation of external exposure — see [Known limitations](#known-limitations).
 
 ---
 
