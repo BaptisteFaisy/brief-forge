@@ -233,7 +233,14 @@ describe('issueCollector — collectDecisions', () => {
     ).resolves.toEqual([]);
   });
 
-  it('propage un refus de droits utilisateur', async () => {
+  it('replie sur les commentaires quand Confluence refuse l’accès', async () => {
+    // Constaté sur un déploiement réel (site de démo, 11/11) : l'API Confluence
+    // peut renvoyer 401/403 alors que la lecture Jira du même ticket réussit
+    // (contexte d'installation, app non multi-produits, droits Confluence
+    // distincts). Confluence est **optionnel** (§ 4.1) : un refus ne doit pas
+    // faire tomber le brief, il replie sur les décisions en commentaire.
+    // Le contrôle d'accès Jira (BC-09) reste assuré en amont par
+    // `assertIssueAccess` et par `collectIssue`, qui refusent, eux.
     const confluence: ConfluenceClient = {
       searchPagesByLabels: async () => {
         throw new PermissionDeniedError('PROJ-7');
@@ -242,7 +249,7 @@ describe('issueCollector — collectDecisions', () => {
     };
     await expect(
       collectDecisions(fakeIssue(), defaultProjectSettings('PROJ'), { confluence })
-    ).rejects.toBeInstanceOf(PermissionDeniedError);
+    ).resolves.toEqual([]);
   });
 });
 

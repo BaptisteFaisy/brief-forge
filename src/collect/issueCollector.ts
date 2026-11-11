@@ -84,17 +84,32 @@ function forgeUser(): ForgeUserApi {
   return asUser();
 }
 
-function forgeRoute(path: string): unknown {
-  const route = forgeModule().route;
-  return typeof route === 'function' ? route`${path}` : path;
+/**
+ * Chemin de requête pour `@forge/api`.
+ *
+ * Constaté sur un déploiement réel (sonde du 11/11) : `@forge/api` n'accepte
+ * **que** un objet `Route`, jamais une chaîne nue (« You must create your route
+ * using the 'route' export »), et le tag `route` refuse un chemin complet
+ * interpolé (« Disallowing path manipulation attempt » : `/`, `?` et `#` sont
+ * interdits dans une interpolation). `assumeTrustedRoute` est l'API prévue pour
+ * un chemin que l'application construit elle-même ; nos chemins ne contiennent
+ * que des clés de ticket validées, jamais d'entrée brute.
+ */
+function forgePath(path: string): unknown {
+  const api = forgeModule() as unknown as {
+    assumeTrustedRoute?: (value: string) => unknown;
+    default?: { assumeTrustedRoute?: (value: string) => unknown };
+  };
+  const trusted = api.assumeTrustedRoute ?? api.default?.assumeTrustedRoute;
+  return typeof trusted === 'function' ? trusted(path) : path;
 }
 
 export function jiraTransport(): Transport {
-  return (path, init) => forgeUser().requestJira(forgeRoute(path), init);
+  return (path, init) => forgeUser().requestJira(forgePath(path), init);
 }
 
 export function confluenceTransport(): Transport {
-  return (path, init) => forgeUser().requestConfluence(forgeRoute(path), init);
+  return (path, init) => forgeUser().requestConfluence(forgePath(path), init);
 }
 
 export function graphTransport(): GraphTransport {
@@ -212,6 +227,16 @@ export async function collectDecisions(
   return mergeDecisions([...fromPages, ...fromComments]);
 }
 
+/**
+ * Un 401/403/404 renvoyé par l'API Confluence signifie « pas de Confluence
+ * ici » (et non « l'utilisateur n'a pas le droit de voir le ticket Jira ») :
+ * la collecte se replie sur les décisions en commentaire.
+ */
+function isConfluenceRefused(error: unknown): boolean {
+  if (!(error instanceof BriefError)) return false;
+  return error.code === 'PERMISSION_DENIED' || error.code === 'ISSUE_NOT_FOUND';
+}
+
 /** Pages Confluence étiquetées : lecture optionnelle (§ 4.1). */
 async function confluenceDecisions(
   issue: IssueSnapshot,
@@ -225,8 +250,11 @@ async function confluenceDecisions(
     const pages = await confluence.searchPagesByLabels(labels, issue.issueKey);
     return parseDecisionPages(pages);
   } catch (error) {
-    // App non multi-produits : la lecture Confluence est optionnelle (§ 4.1).
-    if (isConfluenceUnavailable(error)) return [];
+    // Confluence est optionnel (§ 4.1) : app non multi-produits, site sans
+    // Confluence, ou 401/403 sur l'API Confluence (constaté en réel sur un
+    // webtrigger `asApp()`). Un refus **Jira** reste un refus : il ne doit
+    // jamais être avalé ici (BC-09).
+    if (isConfluenceUnavailable(error) || isConfluenceRefused(error)) return [];
     throw error;
   }
 }

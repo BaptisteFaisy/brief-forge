@@ -33,12 +33,26 @@ export async function logAccess(
   );
 }
 
+/**
+ * Borne de `LIMIT` inlinée dans le SQL.
+ *
+ * Forge SQL tourne sur TiDB, qui **refuse un paramètre lié dans `LIMIT`**
+ * (`ERROR 1210 Incorrect arguments to LIMIT`, constaté sur un déploiement
+ * réel). La valeur est donc coercée en entier borné puis écrite dans la
+ * requête — aucune saisie utilisateur n'entre dans ce chemin.
+ */
+export function safeLimit(limit: number, fallback = 100, max = 1000): number {
+  const parsed = Number.parseInt(String(limit), 10);
+  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+  return Math.min(parsed, max);
+}
+
 /** Derniers accès d'un ticket, les plus récents d'abord (audit). */
 export async function loadAccessLog(issueKey: string, limit = 100): Promise<AccessLogRecord[]> {
   const rows = await withDbError('loadAccessLog', () =>
     getSqlClient().query<AccessLogRow>(
-      `SELECT * FROM ${TABLES.accessLog} WHERE issue_key = ? ORDER BY at DESC LIMIT ?`,
-      [issueKey, limit]
+      `SELECT * FROM ${TABLES.accessLog} WHERE issue_key = ? ORDER BY at DESC LIMIT ${safeLimit(limit)}`,
+      [issueKey]
     )
   );
   return rows.map(rowToAccessLog);
