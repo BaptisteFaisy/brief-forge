@@ -84,9 +84,15 @@ jobs:
       # fireworks — stdlib, quelques secondes, aucun réseau.
       - name: Tests des gardes CI (couche0, fireworks)
         run: |
-          python3 .github/couche0/test_check_couche0.py
-          python3 .github/fireworks/test_conflict_agent.py
-          python3 .github/fireworks/test_test_agent.py
-          python3 .github/fireworks/test_scope_agent.py
-          python3 .github/fireworks/test_union_journal.py
-          python3 .github/fireworks/test_quota.py
+          # Boucle plutôt que liste figée : tout nouveau `test_*.py` est joué
+          # sans retoucher ce fichier, et le premier test rouge arrête l'étape.
+          # Exception : `.github/fireworks/test_agent.py` est le pilote de
+          # l'agent de réparation (un module exécutable, pas une suite).
+          set -e
+          for t in .github/couche0/test_*.py .github/fireworks/test_*.py; do
+            case "$t" in
+              .github/fireworks/test_agent.py) continue ;;
+            esac
+            echo "== $t"
+            python3 "$t"
+          done

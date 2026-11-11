@@ -9,7 +9,8 @@ vérifiées.
 
 Quand le sweep de `pr-auto-merge` échoue à rebaser une PR, il appelle
 `conflict_agent.py` dans son clone, rebase en cours. L'agent demande au modèle
-Fireworks la résolution de chaque fichier en conflit, termine le rebase, pousse
+(backend A2A local, Fireworks en repli — voir ci-dessous) la résolution de
+chaque fichier en conflit, termine le rebase, pousse
 sur la branche de la PR avec bail et rend compte en commentaire. La file reprend
 au passage suivant ; seule la CI verte fait merger.
 
@@ -24,10 +25,25 @@ Les deux modules sont chargés par `conflict_agent.py` depuis `origin/main`
 (import direct d'abord) : le sweep ne copie que le script d'agent dans `/tmp`,
 et une branche de PR peut être antérieure à ce découpage.
 
+## Backend d'appel (`backends.py`)
+
+Le compte Fireworks étant suspendu (HTTP 412), les deux agents passent par la
+passerelle **A2A** locale : l'appel devient un `SendMessage` JSON-RPC vers
+l'agent ZeroClaw `b` (`http://127.0.0.1:42617/a2a/b`), qui rend le texte dans
+`result.task.artifacts[].parts[].text`. Le jeton est lu au runtime dans un
+fichier de la machine, jamais dans le dépôt et jamais journalisé. L'agent
+distant est agentique : chaque prompt porte la consigne « aucun outil, rends
+uniquement le contenu demandé dans un seul bloc ».
+
+`backends.resolve_backend()` choisit l'A2A si un jeton est lisible, sinon
+Fireworks si `FIREWORKS_API_KEY` est là, sinon l'agent saute la PR sans bruit
+(compte rendu « à l'auteur de rebaser », jamais de CI rouge). Une erreur
+JSON-RPC, HTTP ou une réponse illisible lève `AgentError` : rien n'est avalé.
+
 ## Contrat d'appel
 
 ```bash
-FIREWORKS_API_KEY=... python3 conflict_agent.py resolve \
+python3 conflict_agent.py resolve \
   --repo BaptisteFaisy/brief-forge --pr 118 --branch feat/x --sha <tête>
 ```
 
@@ -39,9 +55,14 @@ Le script est lu sur `origin/main` (pas sur la branche de la PR, qui peut
 
 | Variable / secret | Défaut | Effet |
 |---|---|---|
-| secret `FIREWORKS_API_KEY` | — | sans lui, l'agent ne fait rien |
-| var `FIREWORKS_MODEL` | `accounts/fireworks/models/minimax-m3p1-flash` | modèle interrogé |
-| var `FIREWORKS_BASE_URL` | `https://api.fireworks.ai/inference/v1/chat/completions` | point d'API |
+| var `CONFLICT_BACKEND` | `auto` | `a2a`, `openai` ou `auto` : force le backend |
+| var `CONFLICT_A2A_URL` | `http://127.0.0.1:42617/a2a/<agent>` | point d'entrée A2A |
+| var `CONFLICT_A2A_AGENT` | `b` | agent ZeroClaw appelé |
+| var `CONFLICT_A2A_TOKEN_FILE` | `~/.config/zeroclaw-serveur/token` | fichier du jeton, repli `/opt/zeroclaw/ephem/data/gateway-admin.token` |
+| var `CONFLICT_A2A_TIMEOUT` | `90` | délai d'un appel A2A (secondes) |
+| secret `FIREWORKS_API_KEY` | — | repli Fireworks ; sans aucun backend, l'agent saute la PR |
+| var `FIREWORKS_MODEL` | `accounts/fireworks/models/minimax-m3p1-flash` | modèle interrogé (repli Fireworks) |
+| var `FIREWORKS_BASE_URL` | `https://api.fireworks.ai/inference/v1/chat/completions` | point d'API (repli Fireworks) |
 | var `FIREWORKS_AGENT_RESOLVE` | `1` | `0` coupe l'agent sans toucher au code |
 
 ## Garde-fous
@@ -70,14 +91,15 @@ restent refusés. Ce n'est pas un contournement du garde, c'est la déclaration
 manquante qui est écrite.
 
 ```bash
-FIREWORKS_API_KEY=... python3 scope_agent.py fix \
+python3 scope_agent.py fix \
   --repo BaptisteFaisy/brief-forge --pr 215 --sha <tête> --guard /tmp/check_couche0.py
 ```
 
 Sorties : `0` corps complété (un commentaire porte le marqueur `automerge-scope`
 avec la tête, donc une seule tentative par commit), `1` échec avec compte rendu,
-`2` rien à faire. Réglages : `FIREWORKS_MODEL` / `FIREWORKS_BASE_URL` comme
-l'agent de conflit, `FIREWORKS_AGENT_SCOPE=0` pour couper. Plafond 25 fichiers ;
+`2` rien à faire. Réglages : mêmes variables `CONFLICT_*` (backend A2A) et
+`FIREWORKS_MODEL` / `FIREWORKS_BASE_URL` (repli) que l'agent de conflit,
+`FIREWORKS_AGENT_SCOPE=0` pour couper. Plafond 25 fichiers ;
 au-delà, label `intervention-humaine` et main humaine.
 
 Une puce rendue sous forme de glob ou de dossier (`app/**/Settings*.kt`,
@@ -106,6 +128,10 @@ facultative et ne casse aucun appelant : le balayeur peut la passer aussi.
 
 ```bash
 cd .github/fireworks
-python3 -m unittest test_conflict_agent test_scope_agent \
+python3 -m unittest test_backends test_conflict_agent test_scope_agent \
     test_union_journal test_quota -v
 ```
+
+La CI joue toutes les suites `test_*.py` de `.github/couche0/` et
+`.github/fireworks/` par boucle : un nouveau test est joué sans retoucher
+`.github/workflows/ci.yml`.

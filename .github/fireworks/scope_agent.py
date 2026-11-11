@@ -26,12 +26,11 @@ Codes de sortie : 0 = corps complété ; 1 = échec avec compte rendu ;
 import argparse
 import fnmatch
 import importlib.util
-import json
 import os
 import re
 import subprocess
 import sys
-import urllib.request
+import types
 
 MODEL_DEFAULT = "accounts/fireworks/models/minimax-m3p1-flash"
 API_DEFAULT = "https://api.fireworks.ai/inference/v1/chat/completions"
@@ -54,6 +53,29 @@ class AgentError(Exception):
 
 class Skip(Exception):
     """Rien à faire : l'appelant saute la PR sans bruit (exit 2)."""
+
+
+def _charger(nom):
+    """Module voisin : import direct, sinon `origin/main` (le sweep ne copie
+    que ce script dans /tmp, et une branche de PR peut être antérieure)."""
+    try:
+        return __import__(nom)
+    except ImportError:
+        pass
+    try:
+        proc = subprocess.run(["git", "show", "origin/main:.github/fireworks/"
+                               "%s.py" % nom], capture_output=True, text=True,
+                              timeout=60)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if proc.returncode != 0 or not proc.stdout:
+        return None
+    module = types.ModuleType(nom)
+    exec(compile(proc.stdout, "%s.py" % nom, "exec"), module.__dict__)
+    return module
+
+
+backends = _charger("backends")
 
 
 def log(message):
@@ -152,22 +174,19 @@ def messages_pour(pr, fichiers, necessaires, relance=False):
 
 
 def fw_complete(api_url, key, model, messages):
-    """Un appel chat/completions Fireworks, rend le texte réponse."""
-    payload = json.dumps({"model": model, "messages": messages,
-                          "temperature": TEMPERATURE,
-                          "max_tokens": MAX_TOKENS}).encode("utf-8")
-    req = urllib.request.Request(api_url, data=payload, method="POST")
-    req.add_header("Authorization", "Bearer " + key)
-    req.add_header("Content-Type", "application/json")
+    """Un appel modèle : passerelle A2A locale (défaut) ou Fireworks (repli).
+
+    La logique d'appel vit dans `backends.py` (jamais dupliquée) : l'A2A est
+    prioritaire dès qu'un jeton est lisible, Fireworks reste le repli.
+    """
+    if backends is None:
+        raise AgentError("module backends introuvable (lu sur origin/main)")
     try:
-        with urllib.request.urlopen(req, timeout=CALL_TIMEOUT_S) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-    except Exception as exc:                                   # noqa: BLE001
-        raise AgentError("appel Fireworks : %s" % str(exc)[:200])
-    try:
-        return data["choices"][0]["message"]["content"]
-    except (KeyError, IndexError, TypeError):
-        raise AgentError("réponse Fireworks illisible (pas de choices[0])")
+        return backends.complete(messages, api_url=api_url, key=key,
+                                 model=model, temperature=TEMPERATURE,
+                                 max_tokens=MAX_TOKENS, timeout=CALL_TIMEOUT_S)
+    except backends.AgentError as exc:
+        raise AgentError(str(exc))
 
 
 def raisons_repondue(texte):
@@ -280,12 +299,16 @@ def ecrire_corps(repo, pr, corps):
 
 
 def verifier_reglages():
-    """Clés et coupe-circuit ; lève Skip si l'agent doit se taire."""
+    """Backend, clés et coupe-circuit ; lève Skip si l'agent doit se taire."""
     key = env_or("FIREWORKS_API_KEY", "")
     if env_or("FIREWORKS_AGENT_SCOPE", "1") == "0":
         raise Skip("agent de périmètre coupé (FIREWORKS_AGENT_SCOPE=0)")
-    if not key:
-        raise Skip("FIREWORKS_API_KEY absent : périmètre laissé à l'auteur")
+    if backends is None:
+        raise Skip("module backends introuvable : périmètre laissé à l'auteur")
+    raison = backends.raison_absent()
+    if raison:
+        raise Skip("pas de backend modèle (%s) : périmètre laissé à l'auteur"
+                   % raison)
     return (key, env_or("FIREWORKS_MODEL", MODEL_DEFAULT),
             env_or("FIREWORKS_BASE_URL", API_DEFAULT))
 

@@ -1,29 +1,28 @@
 #!/usr/bin/env python3
-"""Agent de conflit Fireworks pour la file pr-auto-merge.
+"""Agent de conflit pour la file pr-auto-merge.
 
 Appelé par le sweep DANS son clone quand un rebase bute sur un conflit : il
-fait résoudre chaque conflit élémentaire par un modèle Fireworks, recopie le
-reste du fichier intact (jamais de réécriture complète : un gros fichier serait
-tronqué), boucle sur les arrêts (commits vidés sautés), pousse et rend compte.
-`union_journal.py` réunit les journaux sans modèle ; `quota.py` borne les
-saisines (cooldown, plafond horaire, 3 par PR en 30 min).
+fait résoudre chaque conflit élémentaire par un modèle (`backends.py` : agent
+A2A local d'abord, Fireworks en repli), recopie le reste du fichier intact
+(jamais de réécriture complète : un gros fichier serait tronqué), boucle sur
+les arrêts (commits vidés sautés), pousse et rend compte. `union_journal.py`
+réunit les journaux sans modèle ; `quota.py` borne les saisines (cooldown,
+plafond horaire, 3 par PR en 30 min).
 
-Porte de compilation (v3, 31/10) : une résolution qui ne compile pas n'est
-**jamais poussée** (`compilation_gate.py`). Motif : #615, réconciliation cassée
-classée « échec réel » puis abandonnée. Coupe-circuit : `CONFLICT_COMPILE_GATE=0`.
+Porte de compilation (v3) : une résolution qui ne compile pas n'est **jamais
+poussée** (`compilation_gate.py`). Motif : #615, réconciliation cassée classée
+« échec réel » puis abandonnée. Coupe-circuit : `CONFLICT_COMPILE_GATE=0`.
 Usage : `resolve --repo O/R --pr N --branch b --sha s` (`--dry-run` : prompt
 seul). Codes : 0 poussé, 1 échec commenté, 2 rien à faire. Aucun secret dedans.
 """
 
 import argparse
-import json
 import os
 import re
 import subprocess
 import sys
 import time
 import types
-import urllib.request
 
 
 def _charger(nom):
@@ -49,6 +48,7 @@ union_journal = _charger("union_journal")
 quota = _charger("quota")
 # v3 : porte de compilation à côté (`compilation_gate.py`) : plafond de 500 lignes.
 compilation_gate = _charger("compilation_gate")
+backends = _charger("backends")   # A2A local d'abord, Fireworks en repli
 
 MODEL_DEFAULT = "accounts/fireworks/models/minimax-m3p1-flash"
 API_DEFAULT = "https://api.fireworks.ai/inference/v1/chat/completions"
@@ -189,22 +189,15 @@ def build_hunk_messages(path, hunk):
 
 
 def fw_complete(api_url, key, model, messages):
-    """Un appel chat/completions Fireworks, rend le texte réponse."""
-    payload = json.dumps({"model": model, "messages": messages,
-                          "temperature": TEMPERATURE,
-                          "max_tokens": MAX_TOKENS}).encode("utf-8")
-    req = urllib.request.Request(api_url, data=payload, method="POST")
-    req.add_header("Authorization", "Bearer " + key)
-    req.add_header("Content-Type", "application/json")
+    """Un appel modèle via `backends.py` : A2A local d'abord, Fireworks en repli."""
+    if backends is None:
+        raise AgentError("module backends introuvable (lu sur origin/main)")
     try:
-        with urllib.request.urlopen(req, timeout=CALL_TIMEOUT_S) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-    except Exception as exc:                                   # noqa: BLE001
-        raise AgentError("appel Fireworks : %s" % str(exc)[:200])
-    try:
-        return data["choices"][0]["message"]["content"]
-    except (KeyError, IndexError, TypeError):
-        raise AgentError("réponse Fireworks illisible (pas de choices[0])")
+        return backends.complete(messages, api_url=api_url, key=key,
+                                 model=model, temperature=TEMPERATURE,
+                                 max_tokens=MAX_TOKENS, timeout=CALL_TIMEOUT_S)
+    except backends.AgentError as exc:
+        raise AgentError(str(exc))
 
 
 def extract_file(text):
@@ -304,8 +297,13 @@ def preflight(repo, pr, sha, dry_run, now):
     if os.environ.get("FIREWORKS_AGENT_RESOLVE", "1") == "0":
         raise Skip("désactivé (FIREWORKS_AGENT_RESOLVE=0)")
     key = os.environ.get("FIREWORKS_API_KEY", "")
-    if not key and not dry_run:
-        raise Skip("pas de clé FIREWORKS_API_KEY")
+    if not dry_run:
+        # Backend modèle obligatoire : passerelle A2A (jeton local) ou
+        # Fireworks (clé). Le message dit lequel manque.
+        raison = (backends.raison_absent() if backends is not None
+                  else "module backends introuvable")
+        if raison:
+            raise Skip("pas de backend modèle : %s" % raison)
     if quota is not None:
         quota.gc_stamps(now)
     labels = pr_labels(repo, pr)
