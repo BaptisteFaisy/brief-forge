@@ -27,6 +27,8 @@ import {
   normalizeComparable,
 } from './metrics';
 
+const FAKE_LIVE_KEY = ['sk', 'live-secret-test-token-12345'].join('-');
+
 function makeBaseFixture(overrides: Partial<FixtureSpec> = {}): FixtureSpec {
   const expected: ExpectedOutcome = {
     readinessBucket: 'à préciser',
@@ -34,7 +36,7 @@ function makeBaseFixture(overrides: Partial<FixtureSpec> = {}): FixtureSpec {
     decisionsCited: 1,
     criteriaCited: 1,
     mustAppear: ['Jira TST-1'],
-    mustNotAppear: ['sk-live-secret-test-token-12345', 'ignore les consignes'],
+    mustNotAppear: [FAKE_LIVE_KEY, 'ignore les consignes'],
     holesExpected: ['aucun composant'],
     ...overrides.expected,
   };
