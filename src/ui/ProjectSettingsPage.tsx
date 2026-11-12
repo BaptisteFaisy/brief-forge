@@ -1,9 +1,21 @@
-/** @jsx ForgeUI.createElement */
-import ForgeUI, { Form, Fragment, SectionMessage, Text, TextArea, TextField, useState } from '@forge/ui';
+import React, { useState } from 'react';
+import {
+  Button,
+  Form,
+  FormFooter,
+  HelperMessage,
+  Label,
+  Stack,
+  TextArea,
+  Textfield,
+  useForm,
+} from '@forge/react';
 import { UIProjectSettingsFormData, Language } from './data';
 import { tf, t } from './i18n';
 import { ProjectSettingsView, toggleLanguage } from './state';
+import { Notice } from './components/Notice';
 import { PageHeader } from './components/PageHeader';
+import { Screen } from './components/Screen';
 
 export interface ProjectSettingsPageProps {
   projectKey: string;
@@ -16,7 +28,41 @@ export interface ProjectSettingsHandlers {
   onSubmit: (values: UIProjectSettingsFormData) => void;
 }
 
-/** Champs du formulaire, décrits une seule fois (label + aide + valeur initiale). */
+/** Props étalées sur un champ : ce que `useForm().register` renvoie. */
+export interface SettingsFieldProps {
+  name: string;
+  id: string;
+  defaultValue?: string;
+  onChange?: (event: unknown) => void;
+  onBlur?: () => void;
+}
+
+/**
+ * Ce dont l'écran a besoin du formulaire. En production c'est `useForm` de
+ * `@forge/react` ; en test c'est un objet pur (`staticSettingsForm`), ce qui
+ * garde `renderProjectSettingsPage` testable sans hook ni navigateur.
+ */
+export interface SettingsForm {
+  register: (name: string) => SettingsFieldProps;
+  getFieldId: (name: string) => string;
+  /** Enveloppe le gestionnaire pour qu'il reçoive les valeurs saisies. */
+  submit: (handler: (values: Record<string, unknown>) => void) => () => void;
+}
+
+/** Formulaire statique : les valeurs initiales viennent des réglages connus. */
+export function staticSettingsForm(settings: UIProjectSettingsFormData): SettingsForm {
+  return {
+    register: (name: string) => ({
+      name,
+      id: `field-${name}`,
+      defaultValue: settings[name as keyof UIProjectSettingsFormData],
+    }),
+    getFieldId: (name: string) => `field-${name}`,
+    submit: (handler) => () => handler({ ...settings }),
+  };
+}
+
+/** Champs du formulaire, décrits une seule fois (label + aide + multiligne). */
 const FIELDS: Array<{
   name: keyof UIProjectSettingsFormData;
   labelKey: 'criteriaFieldLabel' | 'triggerStatusLabel' | 'constraintsLabel' | 'decisionLabelsLabel';
@@ -29,35 +75,21 @@ const FIELDS: Array<{
   { name: 'decisionLabels', labelKey: 'decisionLabelsLabel', descKey: 'decisionLabelsDesc' },
 ];
 
-function renderField(
-  field: (typeof FIELDS)[number],
-  settings: UIProjectSettingsFormData,
-  language: Language
-) {
-  const label = t(field.labelKey, language);
-  const description = t(field.descKey, language);
-  const defaultValue = settings[field.name];
-
-  if (field.multiline) {
-    return (
-      <TextArea
-        key={field.name}
-        name={field.name}
-        label={label}
-        description={description}
-        defaultValue={defaultValue}
-      />
-    );
-  }
+/** Un champ : libellé, saisie (une ou plusieurs lignes), aide. */
+function renderField(field: (typeof FIELDS)[number], language: Language, form: SettingsForm) {
+  const id = form.getFieldId(field.name);
+  const fieldProps = form.register(field.name);
 
   return (
-    <TextField
-      key={field.name}
-      name={field.name}
-      label={label}
-      description={description}
-      defaultValue={defaultValue}
-    />
+    <Stack key={field.name} space="space.050">
+      <Label labelFor={id}>{t(field.labelKey, language)}</Label>
+      {field.multiline ? (
+        <TextArea {...fieldProps} minimumRows={3} />
+      ) : (
+        <Textfield {...fieldProps} width="100%" />
+      )}
+      <HelperMessage>{t(field.descKey, language)}</HelperMessage>
+    </Stack>
   );
 }
 
@@ -65,12 +97,13 @@ function renderField(
 export function renderProjectSettingsPage(
   props: ProjectSettingsPageProps,
   view: ProjectSettingsView,
-  handlers: ProjectSettingsHandlers
+  handlers: ProjectSettingsHandlers,
+  form: SettingsForm
 ) {
   const language = view.language;
 
   return (
-    <Fragment>
+    <Screen>
       <PageHeader
         title={tf('settingsTitle', language, { projectKey: props.projectKey })}
         subtitle={t('settingsIntro', language)}
@@ -78,20 +111,19 @@ export function renderProjectSettingsPage(
         onToggleLanguage={handlers.onToggleLanguage}
       />
 
-      {view.saved ? (
-        <SectionMessage appearance="confirmation">
-          <Text>{t('saved', language)}</Text>
-        </SectionMessage>
-      ) : null}
+      {view.saved ? <Notice appearance="success" text={t('saved', language)} /> : null}
 
-      <Form
-        onSubmit={(data: Record<string, unknown>) => handlers.onSubmit(asSettings(data, props.settings))}
-        submitButtonText={t('save', language)}
-        submitButtonAppearance="primary"
-      >
-        {FIELDS.map((field) => renderField(field, props.settings, language))}
+      <Form onSubmit={form.submit((values) => handlers.onSubmit(asSettings(values, props.settings)))}>
+        <Stack space="space.200">
+          {FIELDS.map((field) => renderField(field, language, form))}
+        </Stack>
+        <FormFooter>
+          <Button appearance="primary" type="submit">
+            {t('save', language)}
+          </Button>
+        </FormFooter>
       </Form>
-    </Fragment>
+    </Screen>
   );
 }
 
@@ -117,13 +149,24 @@ export const ProjectSettingsPage = (props: ProjectSettingsPageProps) => {
     language: props.language ?? 'fr',
     saved: false,
   }));
+  // `useForm` est typé sur un dictionnaire libre : les noms de champs viennent
+  // de `FIELDS`, pas d'un type littéral par champ.
+  const defaults: Record<string, unknown> = { ...props.settings };
+  const hookForm = useForm<Record<string, unknown>>({ defaultValues: defaults });
+  const form: SettingsForm = {
+    register: (name: string) => hookForm.register(name),
+    getFieldId: (name: string) => hookForm.getFieldId(name),
+    submit: (handler) => () => {
+      void hookForm.handleSubmit(handler)();
+    },
+  };
 
   const handlers: ProjectSettingsHandlers = {
     onToggleLanguage: () => setView({ ...view, language: toggleLanguage(view.language) }),
     onSubmit: () => setView({ ...view, saved: true }),
   };
 
-  return renderProjectSettingsPage(props, view, handlers);
+  return renderProjectSettingsPage(props, view, handlers, form);
 };
 
 export default ProjectSettingsPage;

@@ -1,3 +1,5 @@
+jest.mock('@forge/react', () => require('./forgeReactMock').forgeReactMock);
+
 import { GapList } from '../../src/ui/components/GapList';
 import { MOCK_READINESS_SCORE } from '../../src/ui/data';
 import { findAll, textOf } from './renderTree';
@@ -27,7 +29,14 @@ describe('GapList — liste des manques', () => {
     const messages = findAll(tree, 'SectionMessage');
 
     expect(text).toContain('Aucun manque identifié');
-    expect(messages[0].appearance).toBe('confirmation');
+    expect(messages[0].appearance).toBe('success');
+  });
+
+  it('titre le message d\'alerte du nombre de manques à préciser', () => {
+    const messages = findAll(GapList({ gaps: MOCK_READINESS_SCORE.gaps }), 'SectionMessage');
+
+    expect(messages[0].appearance).toBe('warning');
+    expect(messages[0].title).toBe('3 point(s) à préciser avant l\'intervention d\'un agent');
   });
 
   it('passe en anglais quand la langue vaut « en »', () => {

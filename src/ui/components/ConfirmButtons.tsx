@@ -1,7 +1,8 @@
-/** @jsx ForgeUI.createElement */
-import ForgeUI, { Button, ButtonSet, Fragment, SectionMessage, Text } from '@forge/ui';
+import React from 'react';
+import { Button, ButtonGroup, Stack } from '@forge/react';
 import { Language, UIAttemptItem } from '../data';
 import { t } from '../i18n';
+import { Notice } from './Notice';
 
 export interface ConfirmButtonsProps {
   attempt: UIAttemptItem;
@@ -12,30 +13,22 @@ export interface ConfirmButtonsProps {
 
 /** Confirmer / Corriger le dernier compte rendu, avec retour d'état explicite. */
 export const ConfirmButtons = ({ attempt, language = 'fr', onConfirm, onCorrect }: ConfirmButtonsProps) => (
-  <Fragment>
-    <ButtonSet>
+  <Stack space="space.100">
+    <ButtonGroup>
+      <Button appearance="primary" isDisabled={attempt.confirmed} onClick={() => onConfirm(attempt.id)}>
+        {t('confirm', language)}
+      </Button>
       <Button
-        text={t('confirm', language)}
-        appearance="primary"
-        disabled={attempt.confirmed}
-        onClick={() => onConfirm(attempt.id)}
-      />
-      <Button
-        text={t('correct', language)}
         appearance="subtle"
-        disabled={attempt.correctionRequested}
+        isDisabled={attempt.correctionRequested}
         onClick={() => onCorrect(attempt.id)}
-      />
-    </ButtonSet>
-    {attempt.confirmed ? (
-      <SectionMessage appearance="confirmation">
-        <Text>{t('confirmedMessage', language)}</Text>
-      </SectionMessage>
-    ) : null}
+      >
+        {t('correct', language)}
+      </Button>
+    </ButtonGroup>
+    {attempt.confirmed ? <Notice appearance="success" text={t('confirmedMessage', language)} /> : null}
     {attempt.correctionRequested ? (
-      <SectionMessage appearance="warning">
-        <Text>{t('correctionMessage', language)}</Text>
-      </SectionMessage>
+      <Notice appearance="warning" text={t('correctionMessage', language)} />
     ) : null}
-  </Fragment>
+  </Stack>
 );
