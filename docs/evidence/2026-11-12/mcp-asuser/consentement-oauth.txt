@@ -1,0 +1,19 @@
+# Provenance
+- Date : 2026-11-12 22:18:56 UTC
+- Commande : `état de la page de consentement OAuth (auth.atlassian.com/consent)`
+- Source : état réel de l'écran, relevé via CDP sur le Chrome de l'utilisateur
+
+{
+ "url": "https://auth.atlassian.com/consent?context=eyJraWQiOiJhdXRoLmF0bGFzc2lhbi5jb20tQ09OU0VOVC01YTVjY2Q5MC0yMWJlLTQ0MDItYjdlZ",
+ "compte": "baptiste.faisy@gmail.com",
+ "extrait": "Site (For Jira, Confluence and other tools)\nSelect\nYour account isn't associated with a supported site. Rovo MCP connects with Atlassian sites that use apps like Jira or Confluence. Understand Rovo MCP Server﻿\n, (opens new window)\n\nBy accepting, you agree to Atlassian's privacy policy and terms of use for the MCP Server, and the applicable developer's privacy policy and terms of use for Brief de contexte.\n\nCancel\nAcc",
+ "selecteurDeSite": {
+  "valeur": "",
+  "options": []
+ },
+ "boutons": [
+  "baptiste.faisy@gmail.com  [actif]",
+  "Cancel  [actif]",
+  "Accept  [DÉSACTIVÉ]"
+ ]
+}

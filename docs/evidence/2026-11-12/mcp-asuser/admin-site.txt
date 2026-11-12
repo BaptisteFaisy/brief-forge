@@ -1,0 +1,10 @@
+# Provenance
+- Date : 2026-11-12 22:18:56 UTC
+- Commande : `fiche de l'app dans l'administration du site (admin.atlassian.com → Connected apps)`
+- Source : état réel de l'écran, relevé via CDP sur le Chrome de l'utilisateur
+
+{
+ "url": "https://admin.atlassian.com/s/5f423966-db58-4fe6-b277-b6828aee8db2/user-connected-apps/cGJ58JqlV854KD19hb4oYK0KZVTC3hWx/authorizat",
+ "entete": "Brief de contexte\nRUNS ON ATLASSIAN\nUninstall\nDetails\nConnections\nAuthorization\nData management\n\nPermissions\n\nThis app will perform the following actions. It can also perform these actions on behalf of users. It only has",
+ "scopesGraph": "Teamwork Graph access\n\nDescription of Teamwork Graph access scopes.\n\nRead Atlassian users via Teamwork Graph\nRead Atlassian users via Teamwork Graph\nRead commits via Teamwork Graph\nRead commits via Teamwork Graph\nRead pull requests via Teamwork Graph\nRead pull requests via Teamwork Graph\nRead repositories via Teamwork Graph\nRead repositories via Teamwork Graph\nRead work item remote links via Teamwork Graph\nRead work item remote links via Teamwork Graph\nRead work items via Teamwork Graph\nRead work items via Teamwork Graph\nThere are multiple options for managing app permissions and access. Explore how to manage your third-party apps"
+}
