@@ -23,6 +23,7 @@ import { CondenseFn, condenseText, passthroughCondenser } from './condenser';
 import {
   AttemptRecord,
   BriefInput,
+  BriefLesson,
   DecisionRecord,
   IssueSnapshot,
   LessonRecord,
@@ -50,7 +51,7 @@ export interface BriefDeps {
   collectNeighborChanges?: (issue: IssueSnapshot) => Promise<NeighborChange[]>;
   collectProjectSettings?: (projectKey: string) => Promise<ProjectSettings>;
   loadAttempts?: (issueKey: string) => Promise<AttemptRecord[]>;
-  loadLessons?: (issueKey: string) => Promise<LessonRecord[]>;
+  loadLessons?: (issueKey: string) => Promise<BriefLesson[]>;
   condense?: CondenseFn;
   readSettings?: (projectKey: string) => Promise<ProjectSettings>;
 }

@@ -5,13 +5,14 @@
 
 import { contacts } from '../../src/brief/sections/whoToAsk';
 import { decisionItems } from '../../src/brief/sections/decisions';
+import { buildLessons } from '../../src/brief/sections/lessons';
 import { failedAttempts } from '../../src/brief/sections/alreadyTried';
 import { gapList } from '../../src/brief/sections/gaps';
 import { sortedNeighbors } from '../../src/brief/sections/neighborChanges';
 import { sourceRefs } from '../../src/brief/sections/sources';
 import { hasSource, renderSection } from '../../src/brief/sectionBuilder';
 import { BriefInput } from '../../src/brief/inputs';
-import { OLD_DATE, RECENT_DATE, makeDecision, makeFixture } from './fixtures';
+import { OLD_DATE, RECENT_DATE, makeDecision, makeFixture, makeLessons } from './fixtures';
 
 const ITEM_SOURCED = {
   text: 'Jira TST-101 — /browse/TST-101',
@@ -40,6 +41,37 @@ describe('sections', () => {
     expect(items[0].stale).toBe(true);
     expect(items[1].text).not.toContain('ancienne, à confirmer');
     expect(items[1].stale).toBe(false);
+  });
+
+  it('marque une leçon ancienne « ancienne, à confirmer », dans les deux langues', () => {
+    const input = toInput(makeFixture());
+    const [lesson] = makeLessons();
+
+    const fr = buildLessons({ ...input, lessons: [{ ...lesson, stale: true }] });
+    expect(fr.items[0].text).toContain('(ancienne, à confirmer)');
+    expect(fr.items[0].stale).toBe(true);
+
+    const en = buildLessons({ ...input, lang: 'en', lessons: [{ ...lesson, stale: true }] });
+    expect(en.items[0].text).toContain('(old, to be confirmed)');
+    expect(en.items[0].stale).toBe(true);
+  });
+
+  it('une leçon récente n’est pas marquée ancienne', () => {
+    const input = toInput(makeFixture());
+
+    const spec = buildLessons({ ...input, lessons: makeLessons() });
+
+    expect(spec.items[0].text).not.toContain('ancienne, à confirmer');
+    expect(spec.items[0].stale).toBe(false);
+  });
+
+  it('la leçon garde sa source et sa date même marquée ancienne (BC-02)', () => {
+    const input = toInput(makeFixture());
+
+    const spec = buildLessons({ ...input, lessons: [{ ...makeLessons()[0], stale: true }] });
+
+    expect(hasSource(spec.items[0])).toBe(true);
+    expect(spec.items[0].date).toBe(RECENT_DATE);
   });
 
   it('trie les tentatives échouées de la plus récente à la plus ancienne (BC-07)', () => {

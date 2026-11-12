@@ -36,6 +36,13 @@ export interface SourceRef {
   date: string;
 }
 
+/**
+ * Leçon telle que la fournit la boucle d'apprentissage (`src/review`) : une
+ * leçon stockée, plus le marqueur « ancienne » au-delà de l'âge maximal. Le
+ * marqueur est optionnel : une `LessonRecord` brute reste assignable.
+ */
+export type BriefLesson = LessonRecord & { stale?: boolean };
+
 /** Contexte complet d'une construction de brief, après collecte. */
 export interface BriefInput {
   issue: IssueSnapshot;
@@ -43,7 +50,7 @@ export interface BriefInput {
   decisions: DecisionRecord[];
   neighbors: NeighborChange[];
   attempts: AttemptRecord[];
-  lessons: LessonRecord[];
+  lessons: BriefLesson[];
   /** Collectes en échec : remontées en section « Trous », jamais comblées. */
   errors?: string[];
   /**

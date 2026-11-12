@@ -3,8 +3,10 @@
  *
  * Le contrat prévoit des dépendances injectables (`BriefDeps`) pour que les
  * tests n'aient aucun appel réseau. En production, ce sont les vrais modules
- * qui sont branchés : collecte Jira/Confluence (WP-collect) et stockage des
- * tentatives, des leçons et des réglages (WP-storage).
+ * qui sont branchés : collecte Jira/Confluence (WP-collect), stockage des
+ * tentatives et des réglages (WP-storage), et **boucle d'apprentissage**
+ * (`src/review`) pour les leçons — celles-ci arrivent déjà triées, rattachées à
+ * leur tentative d'origine et marquées « anciennes » au-delà de 18 mois.
  *
  * Les imports sont **paresseux** (`require` dans la fonction) : charger le
  * moteur de brief hors runtime Forge ne doit pas charger `@forge/api`,
@@ -19,11 +21,13 @@ import type {
   NeighborChange,
   ProjectSettings,
 } from '../collect/types';
-import type { AttemptRecord, LessonRecord } from '../storage/types';
+import type { AttemptRecord } from '../storage/types';
+import type { BriefLesson } from './inputs';
 
 type CollectModule = typeof import('../collect/issueCollector');
 type StorageModule = typeof import('../storage');
 type LlmModule = typeof import('../llm');
+type ReviewModule = typeof import('../review');
 
 function collectModule(): CollectModule {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -38,6 +42,11 @@ function storageModule(): StorageModule {
 function llmModule(): LlmModule {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   return require('../llm') as LlmModule;
+}
+
+function reviewModule(): ReviewModule {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  return require('../review') as ReviewModule;
 }
 
 /** Réglages projet : stockage d'abord, collecte Jira en repli. */
@@ -74,8 +83,8 @@ export function defaultBriefDeps(): BriefDeps {
     readSettings,
     loadAttempts: (issueKey: string): Promise<AttemptRecord[]> =>
       storageModule().loadAttempts(issueKey),
-    loadLessons: (issueKey: string): Promise<LessonRecord[]> =>
-      storageModule().loadLessons(issueKey),
+    loadLessons: (issueKey: string): Promise<BriefLesson[]> =>
+      reviewModule().lessonsForIssue(issueKey),
     condense: createCondense(),
   };
 }

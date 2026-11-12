@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Heading, Inline, Lozenge, Stack, Text } from '@forge/react';
-import { Language, UIProjectIssue, UIProjectMetrics } from './data';
+import { Language, UIProjectIssue, UIProjectMetrics, UIProjectMetricsDetail } from './data';
 import { tf, t } from './i18n';
 import { SimpleView, groupIssuesByStatus, toggleLanguage } from './state';
 import { Notice } from './components/Notice';
@@ -13,6 +13,8 @@ export interface ProjectPageProps {
   projectKey: string;
   issues: UIProjectIssue[];
   metrics: UIProjectMetrics;
+  /** Dénominateurs réels des indicateurs ; absents si le résolveur ne les donne pas. */
+  metricsDetail?: UIProjectMetricsDetail | null;
   language?: Language;
 }
 
@@ -81,29 +83,49 @@ function IssueSection({
 }
 
 /** Les quatre indicateurs du projet, dont les manques les plus fréquents. */
-function Metrics({ metrics, language }: { metrics: UIProjectMetrics; language: Language }) {
+function Metrics({
+  metrics,
+  detail,
+  language,
+}: {
+  metrics: UIProjectMetrics;
+  detail: UIProjectMetricsDetail | null;
+  language: Language;
+}) {
   const gapLabel = (gap: UIProjectMetrics['topGaps'][number]) =>
     language === 'en' ? gap.labelEn : gap.labelFr;
+  /** Un taux sans échantillon suffisant s'affiche « — », jamais « 0 % ». */
+  const rate = (value: number | null) =>
+    value === null ? t('metricNoData', language) : `${value} %`;
+  /** La légende cite le dénominateur réel ; sans détail, elle est omise. */
+  const hint = (
+    key: 'metricConfirmedHint' | 'metricClarificationsHint' | 'metricRepeatedHint',
+    count: number | undefined
+  ) => (count === undefined ? undefined : tf(key, language, { count }));
 
   return (
     <Stack space="space.200">
       <StatCard
         label={t('metricConfirmed', language)}
-        value={`${metrics.confirmedWithoutCorrectionRate} %`}
-        hint={t('metricRateHint', language)}
+        value={rate(metrics.confirmedWithoutCorrectionRate)}
+        hint={hint('metricConfirmedHint', detail?.confirmedWithoutCorrection.denominator)}
       />
       <StatCard
         label={t('metricClarifications', language)}
-        value={`${metrics.clarificationsAskedVsGuessedRate} %`}
-        hint={t('metricRateHint', language)}
+        value={rate(metrics.clarificationsAskedVsGuessedRate)}
+        hint={hint(
+          'metricClarificationsHint',
+          detail?.clarificationsAskedVsGuessed.denominator
+        )}
       />
       <StatCard
         label={t('metricRepeated', language)}
         value={String(metrics.repeatedAttemptsAvoidedCount)}
-        hint={t('metricCountHint', language)}
+        hint={hint('metricRepeatedHint', detail?.repeatedAttemptsAvoided.denominator)}
       />
       <Section>
         <Heading size="small">{t('topGapsTitle', language)}</Heading>
+        {metrics.topGaps.length === 0 ? <Text>{t('emptySection', language)}</Text> : null}
         <Stack space="space.025">
           {metrics.topGaps.map((gap) => (
             <Text key={gap.labelEn}>
@@ -129,7 +151,11 @@ export function renderProjectPage(props: ProjectPageProps, view: SimpleView, han
         language={language}
         onToggleLanguage={handlers.onToggleLanguage}
       />
-      <Metrics metrics={props.metrics} language={language} />
+      <Metrics
+        metrics={props.metrics}
+        detail={props.metricsDetail ?? null}
+        language={language}
+      />
       <IssueSection titleKey="sectionReady" issues={grouped.ready} language={language} />
       <IssueSection titleKey="sectionInProgress" issues={grouped.inProgress} language={language} />
       <IssueSection titleKey="sectionReported" issues={grouped.reported} language={language} />
