@@ -1,10 +1,13 @@
-/** @jsx ForgeUI.createElement */
-import ForgeUI, { Fragment, Heading, SectionMessage, StatusLozenge, Strong, Text, useState } from '@forge/ui';
+import React, { useState } from 'react';
+import { Heading, Inline, Lozenge, Stack, Text } from '@forge/react';
 import { Language, UIProjectIssue, UIProjectMetrics } from './data';
 import { tf, t } from './i18n';
 import { SimpleView, groupIssuesByStatus, toggleLanguage } from './state';
+import { Notice } from './components/Notice';
 import { PageHeader } from './components/PageHeader';
+import { Screen, Section } from './components/Screen';
 import { StatCard } from './components/StatCard';
+import { Strong } from './components/Strong';
 
 export interface ProjectPageProps {
   projectKey: string;
@@ -29,47 +32,61 @@ const STATUS_LABEL: Record<UIProjectIssue['status'], 'sectionReady' | 'sectionIn
   reported: 'sectionReported',
 };
 
-function renderIssueLine(issue: UIProjectIssue, language: Language) {
+/** Un ticket de la file : clé, résumé, statut, préparation, agent, compte rendu. */
+function IssueLine({ issue, language }: { issue: UIProjectIssue; language: Language }) {
   return (
-    <Fragment key={issue.issueKey}>
+    <Stack space="space.025">
       <Text>
-        <Strong>{issue.issueKey}</Strong> — {issue.summary}
+        <Strong>{issue.issueKey}</Strong>
+        {` — ${issue.summary}`}
       </Text>
-      <StatusLozenge text={t(STATUS_LABEL[issue.status], language)} appearance={STATUS_APPEARANCE[issue.status]} />
-      <Text>{tf('readinessShort', language, { score: issue.readinessScore })}</Text>
+      <Inline space="space.100" alignBlock="center">
+        <Lozenge appearance={STATUS_APPEARANCE[issue.status]}>
+          {t(STATUS_LABEL[issue.status], language)}
+        </Lozenge>
+        <Text>{tf('readinessShort', language, { score: issue.readinessScore })}</Text>
+      </Inline>
       {issue.agentName ? <Text>{tf('agentLabel', language, { name: issue.agentName })}</Text> : null}
       {issue.lastReportSummary ? (
         <Text>{tf('reportLabel', language, { value: issue.lastReportSummary })}</Text>
       ) : null}
       {issue.unverifiedWithoutTests ? (
-        <SectionMessage appearance="warning" title={t('notVerifiedByTests', language)}>
-          <Text>{t('noTestsWarning', language)}</Text>
-        </SectionMessage>
+        <Notice appearance="warning" title={t('notVerifiedByTests', language)} text={t('noTestsWarning', language)} />
       ) : null}
-    </Fragment>
+    </Stack>
   );
 }
 
-function renderSection(
-  titleKey: 'sectionReady' | 'sectionInProgress' | 'sectionReported',
-  issues: UIProjectIssue[],
-  language: Language
-) {
+/** Une colonne de la page projet (prêts / en cours / rendus). */
+function IssueSection({
+  titleKey,
+  issues,
+  language,
+}: {
+  titleKey: 'sectionReady' | 'sectionInProgress' | 'sectionReported';
+  issues: UIProjectIssue[];
+  language: Language;
+}) {
   return (
-    <Fragment>
+    <Section>
       <Heading size="small">{t(titleKey, language)}</Heading>
       {issues.length === 0 ? <Text>{t('emptySection', language)}</Text> : null}
-      {issues.map((issue) => renderIssueLine(issue, language))}
-    </Fragment>
+      <Stack space="space.150">
+        {issues.map((issue) => (
+          <IssueLine key={issue.issueKey} issue={issue} language={language} />
+        ))}
+      </Stack>
+    </Section>
   );
 }
 
-function renderMetrics(metrics: UIProjectMetrics, language: Language) {
+/** Les quatre indicateurs du projet, dont les manques les plus fréquents. */
+function Metrics({ metrics, language }: { metrics: UIProjectMetrics; language: Language }) {
   const gapLabel = (gap: UIProjectMetrics['topGaps'][number]) =>
     language === 'en' ? gap.labelEn : gap.labelFr;
 
   return (
-    <Fragment>
+    <Stack space="space.200">
       <StatCard
         label={t('metricConfirmed', language)}
         value={`${metrics.confirmedWithoutCorrectionRate} %`}
@@ -85,13 +102,18 @@ function renderMetrics(metrics: UIProjectMetrics, language: Language) {
         value={String(metrics.repeatedAttemptsAvoidedCount)}
         hint={t('metricCountHint', language)}
       />
-      <Heading size="small">{t('topGapsTitle', language)}</Heading>
-      {metrics.topGaps.map((gap) => (
-        <Text key={gap.labelEn}>
-          <Strong>{gapLabel(gap)}</Strong> — {tf('topGapsOccurrences', language, { count: gap.count })}
-        </Text>
-      ))}
-    </Fragment>
+      <Section>
+        <Heading size="small">{t('topGapsTitle', language)}</Heading>
+        <Stack space="space.025">
+          {metrics.topGaps.map((gap) => (
+            <Text key={gap.labelEn}>
+              <Strong>{gapLabel(gap)}</Strong>
+              {` — ${tf('topGapsOccurrences', language, { count: gap.count })}`}
+            </Text>
+          ))}
+        </Stack>
+      </Section>
+    </Stack>
   );
 }
 
@@ -101,17 +123,17 @@ export function renderProjectPage(props: ProjectPageProps, view: SimpleView, han
   const grouped = groupIssuesByStatus(props.issues);
 
   return (
-    <Fragment>
+    <Screen>
       <PageHeader
         title={tf('projectPageTitle', language, { projectKey: props.projectKey })}
         language={language}
         onToggleLanguage={handlers.onToggleLanguage}
       />
-      {renderMetrics(props.metrics, language)}
-      {renderSection('sectionReady', grouped.ready, language)}
-      {renderSection('sectionInProgress', grouped.inProgress, language)}
-      {renderSection('sectionReported', grouped.reported, language)}
-    </Fragment>
+      <Metrics metrics={props.metrics} language={language} />
+      <IssueSection titleKey="sectionReady" issues={grouped.ready} language={language} />
+      <IssueSection titleKey="sectionInProgress" issues={grouped.inProgress} language={language} />
+      <IssueSection titleKey="sectionReported" issues={grouped.reported} language={language} />
+    </Screen>
   );
 }
 

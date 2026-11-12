@@ -11,7 +11,7 @@
  * date ⇒ pas de citation, donc pas de contenu dans le brief.
  */
 import { BRIEF_DATA_DISCLAIMER, quoteBlock } from '../util/markdown';
-import { formatDateFr } from '../util/dates';
+import { DateLang, displayDateFor } from '../util/dates';
 
 /** Origine d'un contenu tiers. `author` et `date` sont obligatoires. */
 export interface SourceMeta {
@@ -55,13 +55,12 @@ export function hardenUntrustedText(text: string): string {
     .trim();
 }
 
-/** Date affichable : date française si ISO reconnue, chaîne brute sinon. */
-export function displayDate(rawDate: string): string {
-  const trimmed = (rawDate ?? '').trim();
-  if (trimmed === '') return '';
-  const parsed = new Date(trimmed);
-  if (Number.isNaN(parsed.getTime())) return trimmed;
-  return formatDateFr(trimmed);
+/**
+ * Date affichable : date formatée si ISO reconnue, chaîne brute sinon.
+ * La langue suit celle du brief (défaut : français, comportement historique).
+ */
+export function displayDate(rawDate: string, lang: DateLang = 'fr'): string {
+  return displayDateFor(rawDate, lang);
 }
 
 /** Libellé de source court, ex. « commentaire de Camille » (la date vient après). */

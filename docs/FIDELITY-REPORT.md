@@ -1,6 +1,6 @@
 # Rapport de fidélité — brief-forge
 
-> Généré le 2026-11-11 par `npm run fidelity` (jest :
+> Généré le 2026-11-12 par `npm run fidelity` (jest :
 > `test/integration/fidelity.test.ts`). Reproductible : mêmes fixtures → même
 > rapport (lignes triées par fixture puis budget) ; seule la date de génération
 > varie. Les compteurs de jetons incluent l’en-tête « Construit le … » du brief,
@@ -121,9 +121,9 @@
 | PAY-23 | 23 — Confluence indisponible, repli sur commentaires | s | 554 | 100 % | 0 | 554 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
 | PAY-23 | 23 — Confluence indisponible, repli sur commentaires | m | 565 | 100 % | 0 | 565 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
 | PAY-23 | 23 — Confluence indisponible, repli sur commentaires | l | 565 | 100 % | 0 | 565 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
-| PAY-24 | 24 — Teamwork Graph indisponible, repli dev-status Jira | s | 650 | 100 % | 0 | 650 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
-| PAY-24 | 24 — Teamwork Graph indisponible, repli dev-status Jira | m | 661 | 100 % | 0 | 661 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
-| PAY-24 | 24 — Teamwork Graph indisponible, repli dev-status Jira | l | 661 | 100 % | 0 | 661 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
+| PAY-24 | 24 — Teamwork Graph indisponible, repli dev-status Jira | s | 651 | 100 % | 0 | 651 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
+| PAY-24 | 24 — Teamwork Graph indisponible, repli dev-status Jira | m | 662 | 100 % | 0 | 662 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
+| PAY-24 | 24 — Teamwork Graph indisponible, repli dev-status Jira | l | 662 | 100 % | 0 | 662 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
 | PAY-25 | 25 — Voisins nombreux (troncature sous budget s) | s | 1099 | 100 % | 0 | 1099 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
 | PAY-25 | 25 — Voisins nombreux (troncature sous budget s) | m | 1723 | 100 % | 0 | 1723 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
 | PAY-25 | 25 — Voisins nombreux (troncature sous budget s) | l | 1723 | 100 % | 0 | 1723 | 100 % | 0 | 0 | 100 % | 100 % | prêt (100) | 100 % | ✓ |
