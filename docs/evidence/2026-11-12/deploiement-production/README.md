@@ -32,6 +32,21 @@ forge-atlassian install --upgrade -e production -p jira \
   -s one-atlas-cndz.atlassian.net --non-interactive --confirm-scopes
 ```
 
+## La production tourne-t-elle bien le code de `main` ?
+
+Oui, et c'est vérifiable : entre le SHA déployé (`60892bd`, celui qu'indiquent les
+artefacts) et `main` après les deux derniers commits, le diff **applicatif**
+(`src/`, `manifest.yml`, `package.json`) est **vide** :
+
+```
+$ git diff --stat 60892bd main -- src/ manifest.yml package.json
+(rien)
+```
+
+Ces deux commits n'ont touché que la documentation, le paquet de preuves et le
+workflow de CI. L'app installée sur le site de démo est donc bien la version
+finale.
+
 ## Ce que ça ne prouve pas
 
 - **L'appel d'outil « en tant qu'utilisateur » (BC-09 / `asUser`) n'a pas été
