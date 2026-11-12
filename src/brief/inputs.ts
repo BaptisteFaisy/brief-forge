@@ -15,6 +15,7 @@ import type {
   ProjectSettings,
 } from '../collect/types';
 import type { AttemptRecord, LessonRecord } from '../storage/types';
+import type { BriefLang } from './labels';
 
 export type {
   DecisionRecord,
@@ -45,4 +46,10 @@ export interface BriefInput {
   lessons: LessonRecord[];
   /** Collectes en échec : remontées en section « Trous », jamais comblées. */
   errors?: string[];
+  /**
+   * Langue du ticket, détectée à la collecte (`detectIssueLanguage`) : tous les
+   * libellés du moteur sont rendus dans cette langue. Absente = français, le
+   * rendu historique — les contextes construits à la main restent inchangés.
+   */
+  lang?: BriefLang;
 }

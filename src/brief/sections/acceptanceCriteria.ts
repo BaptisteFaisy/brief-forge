@@ -11,6 +11,7 @@
 
 import { criteriaFromFieldValue } from '../../collect/settingsDefaults';
 import { sanitizeTicketContent } from '../../security';
+import { jiraLabel, langOf, sectionTitle } from '../i18n';
 import { BriefInput } from '../inputs';
 import { SectionSpec, rankOf, sourcedItem } from '../sectionBuilder';
 
@@ -29,16 +30,16 @@ export function criteriaLines(input: BriefInput): string[] {
 
 export function buildAcceptanceCriteria(input: BriefInput): SectionSpec {
   const { issue } = input;
-  const items = criteriaLines(input).map((line) =>
-    sourcedItem(line, `Jira ${issue.issueKey}`, issue.updatedAt)
-  );
+  const lang = langOf(input);
+  const source = jiraLabel(issue.issueKey, lang);
+  const items = criteriaLines(input).map((line) => sourcedItem(line, source, issue.updatedAt));
   return {
     name: NAME,
     rank: rankOf(NAME),
-    title: NAME,
+    title: sectionTitle(NAME, lang),
     tool: 'get-acceptance-criteria',
     kind: 'criteria',
+    lang,
     items,
-    emptyNote: '_Aucun critère d\'acceptation dans le ticket : à obtenir avant de coder._',
   };
 }

@@ -6,13 +6,18 @@
  * dépendances (collecte Jira/Confluence, stockage, modèle de condensation) sont
  * injectées : les tests n'ont donc aucun appel réseau, et le moteur reste
  * indépendant du module de collecte (contrat § 4.2).
+ *
+ * La **langue du brief** est détectée à la collecte (`detectIssueLanguage`) et
+ * portée par `BriefInput.lang` : tous les libellés produits par le moteur sont
+ * rendus dans cette langue, le contenu tiers cité ne l'est jamais.
  */
 
 import { BUDGET_TOKENS } from '../config';
 import { BriefData, Budget, SourcedItem } from '../types';
-import { formatDateFr } from '../util/dates';
+import { formatDate } from '../util/dates';
 import { BriefError } from '../util/errors';
-import { BRIEF_DATA_DISCLAIMER } from '../util/markdown';
+import { disclaimerFor, detectIssueLanguage, langOf, t, tf } from './i18n';
+import type { BriefLang } from './labels';
 import { BudgetResult, applyBudget, visibleItems } from './budget';
 import { CondenseFn, condenseText, passthroughCondenser } from './condenser';
 import {
@@ -61,6 +66,7 @@ function messageOf(error: unknown): string {
 
 /** Collecte tolérante : un échec devient un trou signalé, jamais un mensonge. */
 async function safe<T>(
+  lang: BriefLang,
   label: string,
   load: Loader<T>,
   fallback: T,
@@ -69,7 +75,7 @@ async function safe<T>(
   try {
     return await load();
   } catch (error) {
-    errors.push(`${label} indisponible (${messageOf(error)})`);
+    errors.push(tf('collectUnavailable', lang, { label, error: messageOf(error) }));
     return fallback;
   }
 }
@@ -102,6 +108,9 @@ export function resolveDeps(deps: BriefDeps): BriefDeps {
 
 /**
  * Collecte complète d'un ticket, chaque source pouvant échouer isolément.
+ *
+ * La langue du brief est déterminée ici, dès le ticket lu (`detectIssueLanguage`) :
+ * toutes les sections et l'en-tête en héritent via `BriefInput.lang`.
  */
 export async function collectAll(issueKey: string, deps: BriefDeps): Promise<BriefInput> {
   const effective = resolveDeps(deps);
@@ -113,14 +122,15 @@ export async function collectAll(issueKey: string, deps: BriefDeps): Promise<Bri
   }
   const issue = await effective.collectIssue(issueKey);
   const settings = await loadSettings(issue, effective);
+  const lang = detectIssueLanguage(issue);
   const errors: string[] = [];
   const [decisions, neighbors, attempts, lessons] = await Promise.all([
-    safe('Décisions', () => effective.collectDecisions?.(issue, settings) ?? Promise.resolve([]), [], errors),
-    safe('Changements voisins', () => effective.collectNeighborChanges?.(issue) ?? Promise.resolve([]), [], errors),
-    safe('Tentatives', () => effective.loadAttempts?.(issueKey) ?? Promise.resolve([]), [], errors),
-    safe('Leçons', () => effective.loadLessons?.(issueKey) ?? Promise.resolve([]), [], errors),
+    safe(lang, t('collectDecisions', lang), () => effective.collectDecisions?.(issue, settings) ?? Promise.resolve([]), [], errors),
+    safe(lang, t('collectNeighbors', lang), () => effective.collectNeighborChanges?.(issue) ?? Promise.resolve([]), [], errors),
+    safe(lang, t('collectAttempts', lang), () => effective.loadAttempts?.(issueKey) ?? Promise.resolve([]), [], errors),
+    safe(lang, t('collectLessons', lang), () => effective.loadLessons?.(issueKey) ?? Promise.resolve([]), [], errors),
   ]);
-  return { issue, settings, decisions, neighbors, attempts, lessons, errors };
+  return { issue, settings, decisions, neighbors, attempts, lessons, errors, lang };
 }
 
 /**
@@ -178,10 +188,16 @@ export function briefHeader(
   builtAt: string
 ): string {
   const { issue } = input;
+  const lang = langOf(input);
   return [
-    `# Brief de travail — ${issue.issueKey} (budget ${budget}, cible ≈ ${tokenTarget} jetons)`,
-    `_Construit le ${formatDateFr(builtAt)} · ${issue.issueType} · statut ${issue.status} · projet ${issue.projectKey}_`,
-    BRIEF_DATA_DISCLAIMER,
+    tf('headerTitle', lang, { key: issue.issueKey, budget, tokens: tokenTarget }),
+    tf('headerMeta', lang, {
+      date: formatDate(builtAt, lang),
+      type: issue.issueType,
+      status: issue.status,
+      project: issue.projectKey,
+    }),
+    disclaimerFor(lang),
   ].join('\n\n');
 }
 
@@ -213,6 +229,15 @@ function toBriefData(
 /** Ordre de précalcul des trois budgets. */
 const BUDGET_ORDER: Budget[] = ['s', 'm', 'l'];
 
+/**
+ * Condenseur effectif : celui du câblage résolu (modèle hébergé en production),
+ * sinon le repli `passthrough` (texte d'origine). Un test qui injecte ses
+ * dépendances n'hérite donc jamais du condenseur de production.
+ */
+function condenseOf(effective: BriefDeps): CondenseFn {
+  return effective.condense ?? passthroughCondenser;
+}
+
 /** Rend un brief pour un budget à partir d'un contexte déjà collecté. */
 async function renderBrief(
   input: BriefInput,
@@ -233,8 +258,9 @@ export async function buildBrief(
   budget: Budget,
   deps: BriefDeps = {}
 ): Promise<BriefData> {
-  const input = await collectAll(issueKey, deps);
-  return renderBrief(input, budget, new Date().toISOString(), deps.condense ?? passthroughCondenser);
+  const effective = resolveDeps(deps);
+  const input = await collectAll(issueKey, effective);
+  return renderBrief(input, budget, new Date().toISOString(), condenseOf(effective));
 }
 
 /** Construit les trois budgets d'un ticket (brief précalculé, § 4.7). */
@@ -242,9 +268,10 @@ export async function buildAllBudgets(
   issueKey: string,
   deps: BriefDeps = {}
 ): Promise<Record<Budget, BriefData>> {
-  const input = await collectAll(issueKey, deps);
+  const effective = resolveDeps(deps);
+  const input = await collectAll(issueKey, effective);
   const builtAt = new Date().toISOString();
-  const condense = deps.condense ?? passthroughCondenser;
+  const condense = condenseOf(effective);
   const out = {} as Record<Budget, BriefData>;
   for (const budget of BUDGET_ORDER) {
     out[budget] = await renderBrief(input, budget, builtAt, condense);
