@@ -1,0 +1,11 @@
+# Provenance
+- Date : 2026-11-12 17:56:17 CET
+- Commande : `forge-atlassian deploy -e staging --non-interactive --approve MAJOR_VERSION_RULE`
+- Dépôt : brief-forge @ 60892bd
+
+(extrait du déploiement — lignes de verdict uniquement)
+
+✔ Deployed
+Deployed Brief de contexte to the staging environment with 1 approval acknowledged.
+We've detected new scopes or egress URLs in your app.
+ℹ The version of your app [2.0.0] that was just deployed to [staging] is eligible for the Runs on Atlassian program.

@@ -1,0 +1,8 @@
+# Provenance
+- Date : 2026-11-12 17:56:17 CET
+- Commande : `forge-atlassian install --upgrade -e staging -p jira -s one-atlas-cndz.atlassian.net --non-interactive --confirm-scopes`
+- Dépôt : brief-forge @ 60892bd
+Error: Could not find an installation for the provided Atlassian app
+
+Rerunning the command with --verbose may give more details.
+

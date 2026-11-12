@@ -33,9 +33,9 @@ forge-atlassian variables list -e production
 
 ## Ce que ça ne prouve pas
 
-- **`staging` et `production` ne sont pas à jour** : elles sont encore au
-  11 novembre, avant les neuf PR. Le tableau ci-dessus le dit, mais c'est la
-  chose à ne pas rater.
+- **`staging` et `production` étaient au 11 novembre lors de cette capture** :
+  depuis, `main` y a été déployé (voir l'étape
+  [déploiement staging + production](../deploiement-production/)).
 - L'éligibilité affichée ne vaut que pour l'environnement `development`.
 - Rien de tout cela ne prouve que la condensation se déclenche : elle ne se
   déclenche sur aucun ticket du site de démo (voir
