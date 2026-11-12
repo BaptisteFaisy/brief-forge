@@ -1,0 +1,27 @@
+# Provenance
+- Date : 2026-11-12 16:45:46 CET
+- Commande : `node scripts/mcp-e2e.mjs --discovery`
+- Dépôt : brief-forge-work @ a2047df
+brief-forge — test de bout en bout du serveur MCP
+  · point d’accès : https://mcp.atlassian.com/forge/08a89a5d-94d0-448f-8c1a-70f938b2c3a8
+  · ÉTAPE 0 non jouée : l’URL des métadonnées est déduite du point d’accès.
+  ·   (ajoutez --probe pour lire le vrai WWW-Authenticate : POST https://mcp.atlassian.com/forge/08a89a5d-94d0-448f-8c1a-70f938b2c3a8 sans jeton)
+── ÉTAPE 1/2 — GET https://mcp.atlassian.com/.well-known/oauth-protected-resource/forge/08a89a5d-94d0-448f-8c1a-70f938b2c3a8
+  · resource : https://mcp.atlassian.com/forge/08a89a5d-94d0-448f-8c1a-70f938b2c3a8
+  · authorization_servers : https://auth.atlassian.com/VCeDsk8ZHncYF1g234fKtc4lNipbBhu3
+  · scopes_supported : read:me, read:account, offline_access, email, read:jira-work, write:jira-work, search:confluence, read:confluence-user, read:page:confluence, write:page:confluence, read:comment:confluence, write:comment:confluence, read:space:confluence, read:hierarchical-content:confluence, write:component:compass, read:component:compass, read:scorecard:compass, write:scorecard:compass, read:event:compass, read:metric:compass, read:all:twg, write:all:twg
+  · bearer_methods_supported : header
+── ÉTAPE 2/2 — métadonnées du serveur d’autorisation https://auth.atlassian.com/VCeDsk8ZHncYF1g234fKtc4lNipbBhu3
+  · URL retenue : https://auth.atlassian.com/.well-known/oauth-authorization-server/VCeDsk8ZHncYF1g234fKtc4lNipbBhu3
+  · issuer : https://auth.atlassian.com/VCeDsk8ZHncYF1g234fKtc4lNipbBhu3
+  · authorization_endpoint : https://auth.atlassian.com/authorize
+  · token_endpoint : https://auth.atlassian.com/oauth/token
+  · registration_endpoint : https://auth.atlassian.com/VCeDsk8ZHncYF1g234fKtc4lNipbBhu3/dcr/register
+  · scopes_supported : (non annoncé)
+  · grant_types_supported : authorization_code, client_credentials, refresh_token, urn:ietf:params:oauth:grant-type:token-revoke, urn:ietf:params:oauth:grant-type:jwt-bearer, urn:ietf:params:oauth:grant-type:token-exchange
+  · code_challenge_methods_supported : S256
+  ✓ découverte OAuth complète : scopes, serveur d’autorisation et méthodes bearer sont annoncés.
+  La suite du protocole exige un humain :
+    1. activation admin de l’exposition externe (si le site l’exige)
+    2. consentement OAuth 2.1 dans un navigateur
+    3. jeton transmis via MCP_TOKEN ou --token-file

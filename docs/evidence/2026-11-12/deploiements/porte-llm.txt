@@ -1,0 +1,29 @@
+# Provenance
+- Date : 2026-11-12 16:45:46 CET
+- Commande : `forge-atlassian variables list -e {development,staging,production}`
+
+== development ==
+Showing variables from the development environment:
+
+┌────────────┬────────────────────────┬───────┐
+
+│ Encrypted? │ Key                    │ Value │
+
+├────────────┼────────────────────────┼───────┤
+
+│            │ BRIEF_LLM_CONDENSATION │ 1     │
+
+└────────────┴────────────────────────┴───────┘
+
+Note, the values of encrypted variables are shown as ****.
+
+== staging ==
+There are no variables in the staging environment.
+
+Use forge variables set to create a variable.
+
+== production ==
+There are no variables in the production environment.
+
+Use forge variables set to create a variable.
+
