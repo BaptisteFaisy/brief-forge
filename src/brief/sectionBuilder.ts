@@ -14,8 +14,10 @@
 import { SECTION_ORDER, SectionName } from '../config';
 import { displayDate, hardenUntrustedText, isSourceComplete } from '../security/quoting';
 import { SourcedItem } from '../types';
-import { bulletList, numberedCriteria, quoteBlock, sectionHeader, truncationHint } from '../util/markdown';
+import { bulletList, numberedCriteria, quoteBlock, sectionHeader } from '../util/markdown';
 import { estimateTokens } from '../util/tokens';
+import { sectionEmptyNote, truncationHintFor } from './i18n';
+import type { BriefLang } from './labels';
 
 export type SectionKind = 'quote' | 'criteria' | 'bullets';
 
@@ -30,6 +32,8 @@ export interface SectionSpec {
   items: SourcedItem[];
   /** Texte affiché quand la section est vide (BC-03 : on signale le trou). */
   emptyNote?: string;
+  /** Langue du brief : absente = français (rendu historique). */
+  lang?: BriefLang;
 }
 
 /** Section effectivement rendue, avec le compte de ce qui a été coupé. */
@@ -65,29 +69,29 @@ export function sourcedItem(text: string, source: string, date: string): Sourced
 }
 
 /** Ligne d'un item : le texte, puis sa provenance datée. */
-export function itemLine(item: SourcedItem): string {
-  return `${item.text} — _${item.source}, ${displayDate(item.date)}_`;
+export function itemLine(item: SourcedItem, lang: BriefLang = 'fr'): string {
+  return `${item.text} — _${item.source}, ${displayDate(item.date, lang)}_`;
 }
 
 /**
  * Cite un contenu tiers : durcissement (BC-10) puis bloc `>` préfixé de sa
  * source et de sa date. Un texte vide après durcissement est supprimé.
  */
-function quotedItem(item: SourcedItem): string {
+function quotedItem(item: SourcedItem, lang: BriefLang): string {
   const hardened = hardenUntrustedText(item.text);
   if (hardened === '') return '';
-  return quoteBlock(hardened, item.source, displayDate(item.date));
+  return quoteBlock(hardened, item.source, displayDate(item.date, lang));
 }
 
-function renderBody(kind: SectionKind, items: SourcedItem[]): string {
+function renderBody(kind: SectionKind, items: SourcedItem[], lang: BriefLang): string {
   if (items.length === 0) return '';
   if (kind === 'quote') {
-    return items.map(quotedItem).filter((block) => block.length > 0).join('\n\n');
+    return items.map((item) => quotedItem(item, lang)).filter((block) => block.length > 0).join('\n\n');
   }
   if (kind === 'criteria') {
-    return numberedCriteria(items.map(itemLine));
+    return numberedCriteria(items.map((item) => itemLine(item, lang)));
   }
-  return bulletList(items.map(itemLine));
+  return bulletList(items.map((item) => itemLine(item, lang)));
 }
 
 /**
@@ -98,18 +102,19 @@ export function renderSection(
   spec: SectionSpec,
   visibleCount: number = spec.items.length
 ): RenderedSection {
+  const lang: BriefLang = spec.lang ?? 'fr';
   const items = sourcedOnly(spec.items);
   const total = items.length;
   const visible = Math.max(0, Math.min(visibleCount, total));
   const shown = items.slice(0, visible);
   const hidden = total - visible;
-  const body = renderBody(spec.kind, shown);
-  const hint = truncationHint(hidden, spec.tool);
+  const body = renderBody(spec.kind, shown, lang);
+  const hint = truncationHintFor(hidden, spec.tool, lang);
   const blocks = [sectionHeader(spec.rank, spec.title)];
   if (body) {
     blocks.push(body);
   } else if (total === 0) {
-    blocks.push(spec.emptyNote ?? '_Rien de sourcé ici : ne pas deviner (voir Trous)._');
+    blocks.push(spec.emptyNote ?? sectionEmptyNote(spec.name, lang));
   }
   if (hint) blocks.push(hint);
   const markdown = blocks.join('\n\n');

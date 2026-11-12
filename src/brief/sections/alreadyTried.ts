@@ -3,10 +3,13 @@
  *
  * Les tentatives échouées sont réinjectées dans chaque brief suivant, la plus
  * récente d'abord : un agent qui reprend le ticket doit savoir ce qui a déjà
- * été essayé et pourquoi ça n'a pas marché.
+ * été essayé et pourquoi ça n'a pas marché. Le compte rendu cité est du contenu
+ * tiers (jamais traduit) ; l'ossature de la ligne est un libellé moteur.
  */
 
 import { sanitizeTicketContent } from '../../security';
+import { attemptLabel, langOf, sectionTitle, tf } from '../i18n';
+import type { BriefLang } from '../labels';
 import { AttemptRecord, BriefInput } from '../inputs';
 import { SectionSpec, rankOf, sourcedItem } from '../sectionBuilder';
 
@@ -36,25 +39,32 @@ export function failedAttempts(attempts: AttemptRecord[]): AttemptRecord[] {
     .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
 }
 
-export function attemptItems(attempts: AttemptRecord[]): ReturnType<typeof sourcedItem>[] {
-  return failedAttempts(attempts).map((attempt) => {
-    const excerpt = reportExcerpt(attempt);
-    const tests = attempt.testsPassed ? ` (tests : ${attempt.testsPassed})` : '';
-    const text = excerpt
-      ? `Tentative ${attempt.agentName} — ${attempt.status} : ${excerpt}${tests}`
-      : `Tentative ${attempt.agentName} — ${attempt.status}${tests}`;
-    return sourcedItem(text, `Tentative ${attempt.id}`, attempt.startedAt);
-  });
+/** Ligne d'une tentative : libellé moteur + extrait cité + résultat de tests. */
+function attemptLine(attempt: AttemptRecord, lang: BriefLang): string {
+  const excerpt = reportExcerpt(attempt);
+  const tests = attempt.testsPassed ? tf('testsSuffix', lang, { value: attempt.testsPassed }) : '';
+  const vars = { agent: attempt.agentName, status: attempt.status, excerpt, tests };
+  return tf(excerpt ? 'attemptWithExcerpt' : 'attemptWithoutExcerpt', lang, vars);
+}
+
+export function attemptItems(
+  attempts: AttemptRecord[],
+  lang: BriefLang = 'fr'
+): ReturnType<typeof sourcedItem>[] {
+  return failedAttempts(attempts).map((attempt) =>
+    sourcedItem(attemptLine(attempt, lang), attemptLabel(attempt.id, lang), attempt.startedAt)
+  );
 }
 
 export function buildAlreadyTried(input: BriefInput): SectionSpec {
+  const lang = langOf(input);
   return {
     name: NAME,
     rank: rankOf(NAME),
-    title: NAME,
+    title: sectionTitle(NAME, lang),
     tool: 'get-failed-attempts',
     kind: 'bullets',
-    items: attemptItems(input.attempts),
-    emptyNote: '_Aucune tentative précédente enregistrée sur ce ticket._',
+    lang,
+    items: attemptItems(input.attempts, lang),
   };
 }

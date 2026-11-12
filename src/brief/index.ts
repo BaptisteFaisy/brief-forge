@@ -44,7 +44,7 @@ export type {
 
 export { buildObjective, objectiveText } from './sections/objective';
 export { buildAcceptanceCriteria, criteriaLines } from './sections/acceptanceCriteria';
-export { buildDecisions, decisionItems, decisionExcerpt } from './sections/decisions';
+export { buildDecisions, decisionItems, decisionExcerpt, staleLabel } from './sections/decisions';
 export { buildAlreadyTried, attemptItems, failedAttempts } from './sections/alreadyTried';
 export { buildNeighborChanges, sortedNeighbors } from './sections/neighborChanges';
 export { buildConstraints } from './sections/constraints';
@@ -52,3 +52,25 @@ export { buildLessons, sortedLessons } from './sections/lessons';
 export { buildWhoToAsk, contacts } from './sections/whoToAsk';
 export { buildGaps, gapList } from './sections/gaps';
 export { buildSources, sourceRefs } from './sections/sources';
+
+/* Langue du brief : détection + libellés produits par le moteur. */
+export {
+  attemptLabel,
+  changeLabel,
+  decisionLabel,
+  detectIssueLanguage,
+  detectLanguage,
+  disclaimerFor,
+  jiraLabel,
+  langOf,
+  languageScore,
+  lessonLabel,
+  sectionEmptyNote,
+  sectionTitle,
+  settingsLabel,
+  t,
+  tf,
+  truncationHintFor,
+} from './i18n';
+export { BRIEF_STRINGS, SECTION_EMPTY_NOTES, SECTION_TITLES } from './labels';
+export type { BriefLang, BriefStringKey } from './labels';
