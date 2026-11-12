@@ -1,0 +1,8 @@
+# Provenance
+- Date : 2026-11-12 22:03:42 CET
+- Commande : `forge-atlassian environments list` (après le redéploiement de development sur le main final)
+- Dépôt : brief-forge @ 28fcfe6
+
+| ab173a5a-5844-4dee-a987-aee077275ebf | PRODUCTION  | production  | 2026-11-12T16:58:55.434Z |
+| 71aa7f8b-9eaf-4294-a716-3dd4dbde7fe4 | STAGING     | staging     | 2026-11-12T16:57:31.362Z |
+| 49dcb90d-ed5e-43bf-8097-02a6546f8aaa | DEVELOPMENT | development | 2026-11-12T21:02:48.825Z |

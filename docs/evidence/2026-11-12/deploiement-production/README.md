@@ -47,6 +47,19 @@ Ces deux commits n'ont touché que la documentation, le paquet de preuves et le
 workflow de CI. L'app installée sur le site de démo est donc bien la version
 finale.
 
+## État final des trois environnements
+
+`development` a été redéployé sur le `main` final après la fusion du paquet de
+preuves, pour que les trois environnements tournent **le même code
+applicatif** — seuls leurs numéros de version diffèrent, comme le veut Forge
+(`environnements-final.txt`).
+
+| Environnement | Version déployée | Code applicatif | Éligibilité RoA |
+|---|---|---|---|
+| `development` | 5.6.0 | `main` final | ✓ |
+| `staging` | 2.0.0 | identique (diff vide) | ✓ |
+| `production` | 3.0.0 | identique (diff vide) | ✓ |
+
 ## Ce que ça ne prouve pas
 
 - **L'appel d'outil « en tant qu'utilisateur » (BC-09 / `asUser`) n'a pas été
