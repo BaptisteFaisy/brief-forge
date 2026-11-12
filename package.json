@@ -9,6 +9,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "fidelity": "jest test/integration/fidelity --silent=false",
+    "fidelity:report": "WRITE_FIDELITY_REPORT=1 jest test/integration/fidelity --silent=false",
     "site-data": "jest test/integration/export-site --silent=false",
     "lint": "tsc --noEmit"
   },
@@ -26,6 +27,7 @@
     "@forge/api": "^8.5.0",
     "@forge/bridge": "^7.3.0",
     "@forge/events": "^3.0.10",
+    "@forge/llm": "^1.0.10",
     "@forge/react": "^12.5.0",
     "@forge/resolver": "^2.0.2",
     "@forge/sql": "^4.0.10",
