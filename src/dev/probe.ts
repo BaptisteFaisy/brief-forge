@@ -20,6 +20,10 @@
  */
 import { asApp, assumeTrustedRoute } from '@forge/api';
 
+import { json, param, timed } from './probeTypes';
+import type { JsonResponse, ProbeRequest, ProbeResponse } from './probeTypes';
+import { cmdFull, cmdScan } from './probeLive';
+
 import type { Budget } from '../types';
 import { buildBrief } from '../brief';
 import { computeReadiness } from '../readiness';
@@ -41,31 +45,6 @@ import {
   logAccess,
   saveBrief,
 } from '../storage';
-
-interface ProbeRequest {
-  method: string;
-  body: string;
-  queryParameters: Record<string, string[]>;
-}
-
-interface ProbeResponse {
-  statusCode: number;
-  body: string;
-  headers?: Record<string, string[]>;
-}
-
-/**
- * `requestJira`/`requestConfluence` typés en `Route`, alors qu'un chemin
- * complet est accepté au runtime (et que `route` refuse un chemin entier :
- * ses interpolations sont échappées comme des paramètres). On reprend donc
- * l'interface minimale utilisée par la couche de collecte.
- */
-interface JsonResponse {
-  json(): Promise<unknown>;
-  ok: boolean;
-  status: number;
-  text(): Promise<string>;
-}
 
 interface ProductFetch {
   (path: string, init?: unknown): Promise<JsonResponse>;
@@ -133,19 +112,6 @@ function appTransports() {
   return { jira, confluence, graph };
 }
 
-function json(body: unknown, statusCode = 200): ProbeResponse {
-  return {
-    statusCode,
-    headers: { 'Content-Type': ['application/json'] },
-    body: JSON.stringify(body, null, 1),
-  };
-}
-
-function param(req: ProbeRequest, name: string, fallback = ''): string {
-  const values = req.queryParameters?.[name];
-  return values && values.length > 0 ? String(values[0]) : fallback;
-}
-
 function budgetOf(req: ProbeRequest): Budget {
   const raw = param(req, 'budget', 'm').toLowerCase();
   return raw === 's' || raw === 'l' ? (raw as Budget) : 'm';
@@ -157,13 +123,6 @@ function issueOf(req: ProbeRequest): string {
     throw new Error(`paramètre « issue » attendu (ex. PAY-6), reçu : « ${key} »`);
   }
   return key;
-}
-
-/** Mesure une étape et renvoie [résultat, millisecondes]. */
-async function timed<T>(run: () => Promise<T>): Promise<[T, number]> {
-  const started = Date.now();
-  const value = await run();
-  return [value, Date.now() - started];
 }
 
 /** `cmd=schema` : crée les tables (DDL idempotent) — valide Forge SQL. */
@@ -383,12 +342,15 @@ export async function devProbe(request: ProbeRequest): Promise<ProbeResponse> {
         return await cmdComment(request);
       case 'seed':
         return await cmdSeed(request);
-      case 'comment':
-        return await cmdComment(request);
-      case 'seed':
-        return await cmdSeed(request);
+      case 'scan':
+        return await cmdScan(request);
+      case 'full':
+        return await cmdFull(request);
       default:
-        return json({ error: `cmd inconnu : ${cmd} (schema|jql|collect|brief|readiness|store|comment|seed)` }, 400);
+        return json(
+          { error: `cmd inconnu : ${cmd} (schema|jql|collect|brief|readiness|store|comment|seed|scan|full)` },
+          400
+        );
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
