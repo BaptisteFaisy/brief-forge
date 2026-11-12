@@ -11,9 +11,13 @@ export * from './queue';
 export * from './triggers';
 export * from './consumer';
 export * from './platformQueue';
+export * from './buildLock';
+export * from './staleDrain';
 
 import { BriefData, Budget } from '../types';
 import { BriefConsumerDeps, BriefStorePort, ConsumeReport, StoredBriefSummary, consumeBriefQueue } from './consumer';
+import { BuildLockPort, createBuildLock } from './buildLock';
+import { StaleDrainReport, drainStaleBriefs } from './staleDrain';
 import {
   PlatformQueuePusher,
   createForgePlatformPusher,
@@ -86,10 +90,14 @@ interface ApiPackage {
 export interface EventRuntimeOverrides {
   queue?: BriefQueuePort;
   store?: BriefStorePort;
+  /** Verrou par ticket du consumer (défaut : verrou GlobalStorage). */
+  lock?: BuildLockPort;
   markBriefStale?: TriggerDeps['markBriefStale'];
   loadIssueState?: TriggerDeps['loadIssueState'];
   loadSettings?: TriggerDeps['loadSettings'];
   buildBrief?: BriefConsumerDeps['buildBrief'];
+  /** Liste les tickets dont un brief stocké est périmé (drain planifié). */
+  listStaleIssueKeys?: () => Promise<string[]>;
   logger?: Logger;
   /** Pousseur de la file platform `brief-build-queue` (déclenche le consumer). */
   platformPush?: PlatformQueuePusher;
@@ -164,6 +172,7 @@ function resolveConsumerDeps(overrides: EventRuntimeOverrides): BriefConsumerDep
     queue: overrides.queue ?? createQueue(forgeStore(), logger),
     buildBrief: overrides.buildBrief ?? ((issueKey, budget) => briefApi().buildBrief(issueKey, budget)),
     store: overrides.store ?? (storageApi() as BriefStorePort),
+    lock: overrides.lock ?? createBuildLock(forgeStore(), logger),
     logger,
   };
 }
@@ -180,6 +189,50 @@ export async function runQueueConsumer(
   overrides: EventRuntimeOverrides = {}
 ): Promise<ConsumeReport> {
   return consumeBriefQueue(resolveConsumerDeps(overrides));
+}
+
+/** Sous-ensemble SQL du module de stockage, résolu à l'appel (lot WP-storage). */
+interface StorageSqlApi {
+  getSqlClient(): {
+    query<Row>(sql: string, params?: Array<string | number | boolean | null>): Promise<Row[]>;
+  };
+  TABLES: { brief: string };
+}
+
+/**
+ * Lister réel des briefs périmés : `SELECT DISTINCT issue_key FROM brief
+ * WHERE stale = 1`, via les fonctions **déjà exportées** du lot stockage
+ * (`getSqlClient`, `TABLES`) — aucune modification de `src/storage/**`.
+ * Quand ce lot exposera un `listStaleBriefIssueKeys()`, remplacer le corps de
+ * cette fabrique par un appel à cette fonction (une ligne).
+ */
+export function createForgeStaleBriefLister(): () => Promise<string[]> {
+  return async () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const storage = require('../storage') as StorageSqlApi;
+    const rows = await storage.getSqlClient().query<{ issue_key: string }>(
+      `SELECT DISTINCT issue_key FROM ${storage.TABLES.brief} WHERE stale = ?`,
+      [1]
+    );
+    return rows
+      .map((row) => row.issue_key)
+      .filter((issueKey): issueKey is string => typeof issueKey === 'string' && issueKey !== '');
+  };
+}
+
+/**
+ * Point d'entrée du `scheduledTrigger` de secours (`brief-rebuild-scheduled`) :
+ * rejoue le consumer sur les tickets encore marqués périmés. Câblage dans
+ * `src/index.ts` : voir `docs/INTEGRATION-EVENTS.md`.
+ */
+export async function runScheduledDrain(
+  overrides: EventRuntimeOverrides = {}
+): Promise<StaleDrainReport> {
+  const deps = resolveConsumerDeps(overrides);
+  return drainStaleBriefs({
+    ...deps,
+    listStaleIssueKeys: overrides.listStaleIssueKeys ?? createForgeStaleBriefLister(),
+  });
 }
 
 /**

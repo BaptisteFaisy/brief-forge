@@ -46,6 +46,8 @@ modules:
       handler: index.onIssueLinkDeleted
     - key: brief-builder-consumer
       handler: index.onBriefBuildRequested
+    - key: brief-rebuild-sched-fn
+      handler: index.briefRebuildScheduled
     - key: issue-context-dyn-prop
       handler: index.issueContextDynamicProperties
 
@@ -398,6 +400,17 @@ modules:
       queue: brief-build-queue
       function: brief-builder-consumer
 
+  # ------------------------------------------------- trigger planifié de secours
+  # Rattrapage des briefs encore périmés : message de file perdu ou consumer en
+  # échec. `interval` est une ÉNUMÉRATION dans le schéma installé
+  # (@forge/manifest 13.9.0) — `hour` = minute 0 de chaque heure, sémantique
+  # identique au `cron: "0 */1 * * *"` visé. La forme objet `interval.cron`
+  # serait rejetée (`additionalProperties: false`).
+  scheduledTrigger:
+    - key: brief-rebuild-scheduled
+      function: brief-rebuild-sched-fn
+      interval: hour
+
   # ------------------------------------------------------------------ stockage
   sql:
     - key: main-sql
@@ -418,8 +431,17 @@ permissions:
     # étiquetées `decision` / `adr`. Retirer ce scope si l'app reste
     # mono-produit (le multi-apps est payant sur le Marketplace).
     - read:confluence-content.all
-  # Teamwork Graph est appelé au nom de l'utilisateur, avec des requêtes
-  # enregistrées : aucune sortie réseau hors Atlassian.
+    # Teamwork Graph (changements voisins : PR et commits des tickets liés,
+    # avec leur état — exigence § 7.1 rang 5). Appel au nom de l'utilisateur
+    # (`requestTeamworkGraph` n'existe que dans `AsUserFetchMethods`), avec des
+    # requêtes enregistrées : aucune sortie réseau hors Atlassian. Noms issus de
+    # la liste officielle embarquée par @forge/manifest 13.9.0.
+    - read:graph:issue:jira
+    - read:graph:issue-remote-link:jira
+    - read:graph:pull-request:external
+    - read:graph:commit:external
+    - read:graph:repository:external
+    - read:graph:user:atlassian
 
 app:
   runtime:
