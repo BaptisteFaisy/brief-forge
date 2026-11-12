@@ -1,5 +1,5 @@
-/** @jsx ForgeUI.createElement */
-import ForgeUI, { Fragment, Heading, SectionMessage, Text, useState } from '@forge/ui';
+import React, { useState } from 'react';
+import { Heading, Stack, Text } from '@forge/react';
 import { BriefData, ReadinessScore } from '../types';
 import { Language, UIAttemptItem } from './data';
 import { tf, t } from './i18n';
@@ -16,8 +16,10 @@ import {
 import { AttemptHistory } from './components/AttemptHistory';
 import { BriefButton, BriefViewer } from './components/BriefViewer';
 import { GapList } from './components/GapList';
+import { Notice } from './components/Notice';
 import { PageHeader } from './components/PageHeader';
 import { ScoreBadge } from './components/ScoreBadge';
+import { Screen, Section } from './components/Screen';
 
 export interface IssueContextProps {
   issueKey: string;
@@ -35,6 +37,45 @@ export interface IssueContextHandlers {
   onCorrect: (attemptId: string) => void;
 }
 
+/** Bloc « Préparation » : score, conseil, manques chiffrés, accès au brief. */
+function ReadinessSection({
+  readiness,
+  language,
+  onOpenBrief,
+}: {
+  readiness: ReadinessScore;
+  language: Language;
+  onOpenBrief: () => void;
+}) {
+  return (
+    <>
+      <Section>
+        <Heading size="small">{t('readiness', language)}</Heading>
+        <ScoreBadge score={readiness.score} language={language} />
+        <Text>{tf('advice', language, { advice: readiness.advice })}</Text>
+      </Section>
+      <GapList gaps={readiness.gaps} language={language} />
+      <BriefButton onOpen={onOpenBrief} language={language} />
+    </>
+  );
+}
+
+/** Bloc « Dernier compte rendu » : avertissement s'il n'est vérifié par aucun test. */
+function LatestReportSection({ latest, language }: { latest?: UIAttemptItem; language: Language }) {
+  return (
+    <Section>
+      <Heading size="small">{t('latestReport', language)}</Heading>
+      {latest && !latest.hasTests ? (
+        <Notice
+          appearance="warning"
+          title={t('notVerifiedByTests', language)}
+          text={t('noTestsWarning', language)}
+        />
+      ) : null}
+    </Section>
+  );
+}
+
 /**
  * Écran `jira:issueContext` : préparation du ticket, manques, aperçu du brief,
  * historique des tentatives et validation du dernier compte rendu.
@@ -49,43 +90,35 @@ export function renderIssueContext(
   const latest = latestAttempt(view.attempts);
 
   return (
-    <Fragment>
+    <Screen>
       <PageHeader
         title={tf('issueContextTitle', language, { issueKey: props.issueKey })}
         language={language}
         onToggleLanguage={handlers.onToggleLanguage}
       />
-
-      <Heading size="small">{t('readiness', language)}</Heading>
-      <ScoreBadge score={props.readiness.score} language={language} />
-      <Text>{tf('advice', language, { advice: props.readiness.advice })}</Text>
-
-      <GapList gaps={props.readiness.gaps} language={language} />
-      <BriefButton onOpen={handlers.onOpenBrief} language={language} />
-
-      <Heading size="small">{t('latestReport', language)}</Heading>
-      {latest && !latest.hasTests ? (
-        <SectionMessage appearance="warning" title={t('notVerifiedByTests', language)}>
-          <Text>{t('noTestsWarning', language)}</Text>
-        </SectionMessage>
-      ) : null}
-
-      <Heading size="small">{t('attemptsTitle', language)}</Heading>
-      <AttemptHistory
-        attempts={view.attempts}
+      <ReadinessSection
+        readiness={props.readiness}
         language={language}
-        latestId={latest ? latest.id : undefined}
-        onConfirm={handlers.onConfirm}
-        onCorrect={handlers.onCorrect}
+        onOpenBrief={handlers.onOpenBrief}
       />
-
+      <LatestReportSection latest={latest} language={language} />
+      <Stack space="space.050">
+        <Heading size="small">{t('attemptsTitle', language)}</Heading>
+        <AttemptHistory
+          attempts={view.attempts}
+          language={language}
+          latestId={latest ? latest.id : undefined}
+          onConfirm={handlers.onConfirm}
+          onCorrect={handlers.onCorrect}
+        />
+      </Stack>
       <BriefViewer
         brief={props.brief}
         isOpen={view.briefOpen}
         onClose={handlers.onCloseBrief}
         language={language}
       />
-    </Fragment>
+    </Screen>
   );
 }
 

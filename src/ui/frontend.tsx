@@ -1,22 +1,15 @@
 /**
- * Point d'entrée du paquet UI (UI Kit natif, `render: native`).
+ * Point d'entrée du paquet UI (UI Kit 2 natif, `render: native`).
  *
  * `manifest.yml` déclare `resources: [{ key: main, path: src/ui/frontend.tsx }]`.
  * Forge compile ce fichier ; il aiguille sur le bon écran selon le module qui
  * l'appelle, charge les données par le résolveur (`invoke`) et rend l'écran
- * correspondant. Les écrans eux-mêmes (`IssueContext.tsx`, `ProjectPage.tsx`,
- * `ProjectSettingsPage.tsx`) restent des fonctions pures testables.
+ * correspondant via `ForgeReconciler.render(...)`. Les écrans eux-mêmes
+ * (`IssueContext.tsx`, `ProjectPage.tsx`, `ProjectSettingsPage.tsx`,
+ * `ConnectHelp.tsx`) restent des fonctions pures testables.
  */
-/** @jsx ForgeUI.createElement */
-import ForgeUI, {
-  Fragment,
-  render,
-  SectionMessage,
-  Text,
-  useEffect,
-  useProductContext,
-  useState,
-} from '@forge/ui';
+import React, { useEffect, useState } from 'react';
+import ForgeReconciler, { Text, useProductContext } from '@forge/react';
 import { invoke } from '@forge/bridge';
 
 import { IssueContext } from './IssueContext';
@@ -28,6 +21,8 @@ import { MOCK_ATTEMPTS, MOCK_BRIEF_DATA, MOCK_PROJECT_ISSUES, MOCK_PROJECT_METRI
 import type { UIAttemptItem, UIProjectIssue, UIProjectMetrics,
   UIProjectSettingsFormData } from './data';
 import { asSettings } from './ProjectSettingsPage';
+import { Notice } from './components/Notice';
+import { Screen } from './components/Screen';
 import type { BriefData, ReadinessScore } from '../types';
 
 /** Données chargées depuis le résolveur, écran par écran. */
@@ -114,7 +109,7 @@ const ProjectSettingsScreen = () => {
 };
 
 /** Aiguillage : un seul paquet, quatre vues. */
-const App = () => {
+export const App = () => {
   const context = useProductContext();
   const type = moduleTypeOf(context);
   if (type === 'jira:projectSettingsPage') return <ProjectSettingsScreen />;
@@ -181,18 +176,23 @@ function briefOf(data: IssueContextData): Partial<BriefData> {
 
 function Loading() {
   return (
-    <Fragment>
+    <Screen>
       <Text>Chargement du brief…</Text>
-    </Fragment>
+    </Screen>
   );
 }
 
 function LoadError({ message }: { message: string }) {
   return (
-    <SectionMessage appearance="warning" title="Brief indisponible">
-      <Text>{message}</Text>
-    </SectionMessage>
+    <Screen>
+      <Notice appearance="warning" title="Brief indisponible" text={message} />
+    </Screen>
   );
 }
 
-export const run = render(<App />);
+/* Le réconciliateur Forge prend la main sur le rendu : plus d'export `run`. */
+ForgeReconciler.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);

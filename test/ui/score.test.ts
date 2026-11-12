@@ -1,3 +1,5 @@
+jest.mock('@forge/react', () => require('./forgeReactMock').forgeReactMock);
+
 import { ScoreBadge, getScoreCategory } from '../../src/ui/components/ScoreBadge';
 import { MOCK_READINESS_SCORE } from '../../src/ui/data';
 import { findAll, textOf } from './renderTree';
@@ -27,11 +29,13 @@ describe('ScoreBadge — score de préparation', () => {
     expect(getScoreCategory(39).statusKey).toBe('statusNotReady');
   });
 
-  it('colore le badge de statut selon la catégorie', () => {
-    const ready = findAll(ScoreBadge({ score: 85 }), 'StatusLozenge');
-    const notReady = findAll(ScoreBadge({ score: 10 }), 'StatusLozenge');
+  it('colore la lozenge de statut selon la catégorie', () => {
+    const ready = findAll(ScoreBadge({ score: 85 }), 'Lozenge');
+    const notReady = findAll(ScoreBadge({ score: 10 }), 'Lozenge');
 
     expect(ready[0].appearance).toBe('success');
+    expect(ready[0].children).toBe('Prêt');
     expect(notReady[0].appearance).toBe('removed');
+    expect(notReady[0].children).toBe('Non prêt');
   });
 });
