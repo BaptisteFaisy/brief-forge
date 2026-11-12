@@ -23,6 +23,7 @@ import { asApp, assumeTrustedRoute } from '@forge/api';
 import { json, param, timed } from './probeTypes';
 import type { JsonResponse, ProbeRequest, ProbeResponse } from './probeTypes';
 import { cmdFull, cmdScan } from './probeLive';
+import { cmdLlm } from './probeLlm';
 
 import type { Budget } from '../types';
 import { buildBrief } from '../brief';
@@ -346,9 +347,11 @@ export async function devProbe(request: ProbeRequest): Promise<ProbeResponse> {
         return await cmdScan(request);
       case 'full':
         return await cmdFull(request);
+      case 'llm':
+        return await cmdLlm(request);
       default:
         return json(
-          { error: `cmd inconnu : ${cmd} (schema|jql|collect|brief|readiness|store|comment|seed|scan|full)` },
+          { error: `cmd inconnu : ${cmd} (schema|jql|collect|brief|readiness|store|comment|seed|scan|full|llm)` },
           400
         );
     }
