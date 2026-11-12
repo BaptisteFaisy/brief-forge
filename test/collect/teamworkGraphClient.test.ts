@@ -3,6 +3,7 @@ import {
   NEIGHBOR_CHANGES_QUERY,
   createTeamworkGraphClient,
   dedupeChanges,
+  normalizeChangeState,
   parseDevStatusChanges,
   parseNeighborChanges,
 } from '../../src/collect/teamworkGraphClient';
@@ -84,7 +85,7 @@ describe('teamworkGraphClient — analyse du graphe', () => {
         url: 'https://exemple.atlassian.net/pr/1',
         date: '2026-03-01T10:00:00.000Z',
         author: 'dana',
-        state: 'MERGED',
+        state: 'mergée',
       },
       {
         kind: 'commit',
@@ -122,6 +123,68 @@ describe('teamworkGraphClient — analyse du graphe', () => {
   it('renvoie une liste vide sur une charge inattendue', () => {
     expect(parseNeighborChanges(undefined)).toEqual([]);
     expect(parseNeighborChanges({ data: {} })).toEqual([]);
+  });
+});
+
+describe('teamworkGraphClient — normalisation des états de PR', () => {
+  it('traduit les cinq états attendus en libellés stables et exploitables', () => {
+    expect(normalizeChangeState('MERGED')).toBe('mergée');
+    expect(normalizeChangeState('DECLINED')).toBe('refusée');
+    expect(normalizeChangeState('CLOSED')).toBe('fermée sans merge');
+    expect(normalizeChangeState('OPEN')).toBe('ouverte');
+    expect(normalizeChangeState('DRAFT')).toBe('brouillon');
+  });
+
+  it('tolère casse et espaces, conserve un état inconnu, refuse le vide', () => {
+    expect(normalizeChangeState(' merged ')).toBe('mergée');
+    expect(normalizeChangeState('Declined')).toBe('refusée');
+    expect(normalizeChangeState('SUPERSEDED')).toBe('remplacée');
+    expect(normalizeChangeState('ÉTAT-EXOTIQUE')).toBe('ÉTAT-EXOTIQUE');
+    expect(normalizeChangeState('')).toBeUndefined();
+    expect(normalizeChangeState(undefined)).toBeUndefined();
+  });
+
+  it('normalise les états lus dans le graphe', () => {
+    const payload = {
+      nodes: [
+        { title: 'PR refusée', url: 'https://x/pr/1', state: 'DECLINED', createdAt: '2026-03-01' },
+        { title: 'PR en cours', url: 'https://x/pr/2', state: 'OPEN', createdAt: '2026-03-02' },
+        { title: 'PR brouillon', url: 'https://x/pr/3', state: 'DRAFT', createdAt: '2026-03-03' },
+        { title: 'PR close', url: 'https://x/pr/4', state: 'CLOSED', createdAt: '2026-03-04' },
+        { title: 'PR intégrée', url: 'https://x/pr/5', state: 'MERGED', createdAt: '2026-03-05' },
+      ],
+    };
+    expect(parseNeighborChanges(payload).map((change) => change.state)).toEqual([
+      'mergée',
+      'fermée sans merge',
+      'brouillon',
+      'ouverte',
+      'refusée',
+    ]);
+  });
+
+  it('normalise aussi le repli dev-status : une PR refusée alimente « Déjà tenté »', () => {
+    const payload = {
+      pullRequests: {
+        detail: [
+          {
+            pullRequests: [
+              {
+                name: 'PR 412 — file Redis dédiée',
+                url: 'https://exemple.atlassian.net/pr/412',
+                status: 'DECLINED',
+                lastUpdate: '2026-08-01T10:00:00.000Z',
+                author: { name: 'cursor' },
+              },
+            ],
+          },
+        ],
+      },
+      commits: { detail: [] },
+    };
+    const changes = parseDevStatusChanges(payload);
+    expect(changes).toHaveLength(1);
+    expect(changes[0].state).toBe('refusée');
   });
 });
 

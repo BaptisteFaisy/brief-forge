@@ -29,7 +29,7 @@ import { loadBrief } from './storage';
 import { computeReadiness } from './readiness';
 import { buildBrief } from './brief';
 import { collectIssue, collectProjectSettings } from './collect/issueCollector';
-import { defaultEventHandlers, runConsumerForEvent } from './events';
+import { defaultEventHandlers, runConsumerForEvent, runScheduledDrain } from './events';
 
 // --------------------------------------------------------------------- actions
 export {
@@ -173,4 +173,14 @@ export const onIssueLinkDeleted = (event: any) => defaultEventHandlers['avi:jira
  */
 export async function onBriefBuildRequested(event?: unknown): Promise<void> {
   await runConsumerForEvent(event);
+}
+
+/**
+ * Trigger planifié `brief-rebuild-scheduled` : rattrape les briefs encore
+ * périmés (message de file perdu, consumer en échec). La logique vit dans
+ * `src/events/staleDrain.ts` ; sur un système sain, cela coûte un SELECT par
+ * heure et rien d'autre.
+ */
+export async function briefRebuildScheduled(): Promise<void> {
+  await runScheduledDrain();
 }

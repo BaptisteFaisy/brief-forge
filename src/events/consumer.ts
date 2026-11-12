@@ -9,9 +9,14 @@
  * - **idempotent** : un budget dont le brief stocké est encore frais
  *   (`stale === false`) n'est pas reconstruit ; une entrée retirée de la file
  *   avant construction évite de perdre un événement arrivé pendant le travail ;
+ * - **verrouillé par ticket** (`buildLock.ts`) : deux exécutions simultanées du
+ *   consumer ne construisent pas le même brief deux fois ; le ticket dont le
+ *   verrou est tenu par une autre exécution **reste en file** (statut
+ *   `locked`) et sera repris par le lot suivant ou le drain planifié ;
  * - **borné dans le temps** : le lot s'arrête avant la limite d'exécution Forge
  *   et remet les tickets non traités dans la file (aucune tentative consommée).
  */
+import { BuildLock, BuildLockPort, LockAttempt } from './buildLock';
 import { BRIEF_FRESHNESS_TARGET_MS } from '../config';
 import { BriefData, Budget } from '../types';
 import { BriefQueuePort, Logger, QueueEntry, consoleLogger, describeError } from './queue';
@@ -40,6 +45,8 @@ export interface BriefConsumerDeps {
   queue: BriefQueuePort;
   buildBrief(issueKey: string, budget: Budget): Promise<BriefData>;
   store: BriefStorePort;
+  /** Verrou par ticket : absent = pas de verrou (comportement historique). */
+  lock?: BuildLockPort;
   logger?: Logger;
   now?: () => Date;
   /** Budget temps du lot, en millisecondes. */
@@ -56,7 +63,7 @@ export interface BudgetOutcome {
   error?: string;
 }
 
-export type IssueStatus = 'built' | 'deferred' | 'failed';
+export type IssueStatus = 'built' | 'deferred' | 'failed' | 'locked';
 
 export interface IssueOutcome {
   issueKey: string;
@@ -131,7 +138,38 @@ async function deferEntry(entry: QueueEntry, context: ConsumeContext): Promise<v
   });
 }
 
-async function processQueueEntry(
+/** Prend le verrou du ticket ; une panne du verrou ne bloque jamais le build. */
+async function acquireBuildLock(
+  issueKey: string,
+  context: ConsumeContext
+): Promise<LockAttempt | null> {
+  const { deps, logger } = context;
+  if (!deps.lock) return null;
+  try {
+    return await deps.lock.acquire(issueKey);
+  } catch (error) {
+    logger.warn(`Verrou de construction indisponible pour ${issueKey} : construction poursuivie`, {
+      issueKey,
+      error: describeError(error),
+    });
+    return null;
+  }
+}
+
+/** Relâche le verrou ; un échec est seulement journalisé (le TTL libérera). */
+async function releaseBuildLock(lock: BuildLock, context: ConsumeContext): Promise<void> {
+  try {
+    await context.deps.lock?.release(lock);
+  } catch (error) {
+    context.logger.warn(`Relâchement du verrou de ${lock.issueKey} impossible (le TTL libérera)`, {
+      issueKey: lock.issueKey,
+      error: describeError(error),
+    });
+  }
+}
+
+/** Corps du traitement d'une entrée : retrait de la file puis trois budgets. */
+async function buildQueuedEntry(
   entry: QueueEntry,
   context: ConsumeContext
 ): Promise<IssueOutcome> {
@@ -155,6 +193,27 @@ async function processQueueEntry(
     issueKey: entry.issueKey,
   });
   return { issueKey: entry.issueKey, status: 'failed', budgets };
+}
+
+async function processQueueEntry(
+  entry: QueueEntry,
+  context: ConsumeContext
+): Promise<IssueOutcome> {
+  const lock = await acquireBuildLock(entry.issueKey, context);
+  if (lock && !lock.acquired) {
+    // Une autre exécution construit ce ticket : l'entrée reste en file, sans
+    // tentative consommée ; le lot suivant (ou le drain planifié) la reprendra.
+    context.logger.info(`Brief ${entry.issueKey} déjà en construction : laissé en file`, {
+      issueKey: entry.issueKey,
+      heldUntil: lock.heldUntil,
+    });
+    return { issueKey: entry.issueKey, status: 'locked', budgets: [] };
+  }
+  try {
+    return await buildQueuedEntry(entry, context);
+  } finally {
+    if (lock) await releaseBuildLock(lock.lock, context);
+  }
 }
 
 /**
