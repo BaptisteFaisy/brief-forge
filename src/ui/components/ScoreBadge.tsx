@@ -1,5 +1,5 @@
-/** @jsx ForgeUI.createElement */
-import ForgeUI, { Fragment, StatusLozenge, Text } from '@forge/ui';
+import React from 'react';
+import { Inline, Lozenge, Text } from '@forge/react';
 import { Language } from '../data';
 import { tf, t } from '../i18n';
 
@@ -20,12 +20,13 @@ export function getScoreCategory(score: number): ScoreCategory {
   return { statusKey: 'statusNotReady', appearance: 'removed' };
 }
 
+/** « Préparation : N / 100 » suivi de la lozenge de statut. */
 export const ScoreBadge = ({ score, language = 'fr' }: ScoreBadgeProps) => {
   const category = getScoreCategory(score);
   return (
-    <Fragment>
+    <Inline space="space.100" alignBlock="center">
       <Text>{tf('readinessScore', language, { score })}</Text>
-      <StatusLozenge text={t(category.statusKey, language)} appearance={category.appearance} />
-    </Fragment>
+      <Lozenge appearance={category.appearance}>{t(category.statusKey, language)}</Lozenge>
+    </Inline>
   );
 };

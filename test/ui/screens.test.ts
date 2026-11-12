@@ -1,3 +1,5 @@
+jest.mock('@forge/react', () => require('./forgeReactMock').forgeReactMock);
+
 import {
   ConnectHelp,
   IssueContext,
@@ -15,8 +17,9 @@ import {
 import { clientCommands, mcpServerUrl, renderConnectHelp } from '../../src/ui/ConnectHelp';
 import { renderIssueContext } from '../../src/ui/IssueContext';
 import { renderProjectPage } from '../../src/ui/ProjectPage';
-import { renderProjectSettingsPage } from '../../src/ui/ProjectSettingsPage';
+import { renderProjectSettingsPage, staticSettingsForm } from '../../src/ui/ProjectSettingsPage';
 import { initialIssueContextView, openBrief } from '../../src/ui/state';
+import type { ProjectSettingsView } from '../../src/ui/state';
 import { findAll, textOf } from './renderTree';
 
 const noop = () => undefined;
@@ -50,17 +53,23 @@ describe('Écran jira:issueContext', () => {
     expect(text).toContain('Historique des tentatives');
   });
 
-  it('n\'ouvre le brief qu\'à la demande, puis affiche le markdown de l\'agent', () => {
+  it('n\'ouvre le brief qu\'à la demande, puis affiche le markdown exact de l\'agent', () => {
     const closed = renderIssueContextPure(props);
     const opened = renderIssueContextPure(props, openBrief(initialIssueContextView(MOCK_ATTEMPTS)));
 
-    expect(findAll(closed, 'ModalDialog')).toHaveLength(0);
-    expect(findAll(opened, 'ModalDialog')).toHaveLength(1);
+    expect(findAll(closed, 'Modal')).toHaveLength(0);
+    expect(findAll(opened, 'Modal')).toHaveLength(1);
+    expect(findAll(opened, 'ModalTitle')).toHaveLength(1);
+    expect(findAll(opened, 'CodeBlock')[0].text).toBe(MOCK_BRIEF_DATA.markdown);
     expect(textOf(opened)).toContain('## 1. Objectif');
   });
 
   it('affiche l\'avertissement quand le dernier compte rendu n\'a pas de tests', () => {
-    expect(textOf(renderIssueContextPure(props))).toContain('n\'a pas été vérifié par des tests');
+    const tree = renderIssueContextPure(props);
+
+    expect(textOf(tree)).toContain('n\'a pas été vérifié par des tests');
+    expect(textOf(tree)).toContain('non vérifié par des tests');
+    expect(findAll(tree, 'SectionMessage').some((m) => m.title === 'non vérifié par des tests')).toBe(true);
   });
 
   it('passe en anglais via la bascule', () => {
@@ -80,22 +89,43 @@ function renderIssueContextPure(
 describe('Écran jira:projectSettingsPage', () => {
   const props = { projectKey: 'PROJ', settings: MOCK_PROJECT_SETTINGS };
 
+  function pure(view: ProjectSettingsView = { language: 'fr', saved: false }) {
+    return renderProjectSettingsPage(
+      props,
+      view,
+      { onToggleLanguage: noop, onSubmit: noop },
+      staticSettingsForm(props.settings)
+    );
+  }
+
   it('expose le module jira:projectSettingsPage', () => {
     expect(typeof ProjectSettingsPage).toBe('function');
   });
 
   it('rend les quatre réglages du projet', () => {
-    const tree = renderProjectSettingsPure(props);
-    const fields = findAll(tree, 'TextField').map((field) => field.name);
+    const tree = pure();
+    const fields = findAll(tree, 'Textfield').map((field) => field.name);
     const areas = findAll(tree, 'TextArea').map((field) => field.name);
 
     expect(fields).toEqual(['acceptanceCriteriaField', 'triggerStatus', 'decisionLabels']);
     expect(areas).toEqual(['constraintsText']);
   });
 
+  it('étiquette chaque champ et l\'accompagne de son aide', () => {
+    const tree = pure();
+    const labels = findAll(tree, 'Label').map((label) => label.children);
+    const helpers = findAll(tree, 'HelperMessage').map((helper) => helper.children);
+
+    expect(labels).toContain('Champ des critères d\'acceptation');
+    expect(labels).toContain('Étiquettes Confluence qui valent décision');
+    expect(helpers).toContain('Une contrainte par ligne ; elles sont ajoutées à chaque brief.');
+    expect(labels).toHaveLength(4);
+    expect(helpers).toHaveLength(4);
+  });
+
   it('pré-remplit les valeurs enregistrées', () => {
-    const tree = renderProjectSettingsPure(props);
-    const values = [...findAll(tree, 'TextField'), ...findAll(tree, 'TextArea')]
+    const tree = pure();
+    const values = [...findAll(tree, 'Textfield'), ...findAll(tree, 'TextArea')]
       .map((field) => field.defaultValue);
 
     expect(values).toContain('customfield_10034');
@@ -103,20 +133,25 @@ describe('Écran jira:projectSettingsPage', () => {
     expect(values).toContain('architecture-decision, adr, sec-review');
   });
 
+  it('propose un bouton d\'enregistrement de type submit', () => {
+    const buttons = findAll(pure(), 'Button');
+    const submit = buttons.find((button) => button.type === 'submit');
+
+    expect(submit?.children).toBe('Enregistrer');
+    expect(submit?.appearance).toBe('primary');
+  });
+
   it('confirme l\'enregistrement', () => {
-    const text = textOf(
-      renderProjectSettingsPure(props, { language: 'fr', saved: true })
-    );
+    const text = textOf(pure({ language: 'fr', saved: true }));
     expect(text).toContain('Réglages enregistrés');
   });
-});
 
-function renderProjectSettingsPure(
-  props: Parameters<typeof ProjectSettingsPage>[0],
-  view = { language: props.language ?? ('fr' as const), saved: false }
-) {
-  return renderProjectSettingsPage(props, view, { onToggleLanguage: noop, onSubmit: noop });
-}
+  it('bascule les libellés en anglais', () => {
+    const text = textOf(pure({ language: 'en', saved: false }));
+    expect(text).toContain('brief-forge settings — PROJ');
+    expect(text).toContain('Acceptance criteria field');
+  });
+});
 
 describe('Écran jira:projectPage « Travail des agents »', () => {
   const props = { projectKey: 'PROJ', issues: MOCK_PROJECT_ISSUES, metrics: MOCK_PROJECT_METRICS };
@@ -159,6 +194,14 @@ describe('Écran jira:projectPage « Travail des agents »', () => {
   it('signale les rendus déposés sans tests', () => {
     expect(textOf(renderProjectPagePure(props))).toContain('non vérifié par des tests');
   });
+
+  it('colore la lozenge de statut de chaque ticket', () => {
+    const lozenges = findAll(renderProjectPagePure(props), 'Lozenge').map((l) => l.appearance);
+
+    expect(lozenges).toContain('new');
+    expect(lozenges).toContain('inprogress');
+    expect(lozenges).toContain('success');
+  });
 });
 
 function renderProjectPagePure(props: Parameters<typeof ProjectPage>[0]) {
@@ -186,6 +229,13 @@ describe('Page d\'aide à la connexion', () => {
     expect(text).toContain('Marche à suivre pour l\'administrateur');
     expect(text).toContain('claude mcp add --transport http brief-forge');
     expect(text).toContain('Commande à copier, par client MCP');
+  });
+
+  it('numérote les quatre étapes administrateur', () => {
+    const text = textOf(renderConnectHelpPure({ appId: 'abc-123' }));
+
+    for (const step of ['1.', '2.', '3.', '4.']) expect(text).toContain(step);
+    expect(text).toContain('rovo:mcp');
   });
 
   it('expose le module d\'aide connexion', () => {

@@ -1,6 +1,8 @@
-/** @jsx ForgeUI.createElement */
-import ForgeUI, { Button, ButtonSet, Fragment, Heading, Strong, Text } from '@forge/ui';
+import React from 'react';
+import { Button, ButtonGroup, Heading, Text } from '@forge/react';
 import { Language } from '../data';
+import { Section } from './Screen';
+import { Strong } from './Strong';
 
 export interface StatCardProps {
   label: string;
@@ -10,13 +12,11 @@ export interface StatCardProps {
 
 /** Indicateur du projet : une valeur mise en avant, un libellé, une précision. */
 export const StatCard = ({ label, value, hint }: StatCardProps) => (
-  <Fragment>
+  <Section>
     <Heading size="small">{label}</Heading>
-    <Text>
-      <Strong>{value}</Strong>
-    </Text>
+    <Strong>{value}</Strong>
     {hint ? <Text>{hint}</Text> : null}
-  </Fragment>
+  </Section>
 );
 
 export interface LanguageToggleProps {
@@ -26,11 +26,9 @@ export interface LanguageToggleProps {
 
 /** Bascule FR/EN minimale, sans dépendance i18n : le bouton montre la langue cible. */
 export const LanguageToggle = ({ language, onToggle }: LanguageToggleProps) => (
-  <ButtonSet>
-    <Button
-      text={language === 'fr' ? 'EN' : 'FR'}
-      appearance="subtle"
-      onClick={onToggle}
-    />
-  </ButtonSet>
+  <ButtonGroup>
+    <Button appearance="subtle" onClick={onToggle}>
+      {language === 'fr' ? 'EN' : 'FR'}
+    </Button>
+  </ButtonGroup>
 );
