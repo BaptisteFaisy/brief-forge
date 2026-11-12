@@ -7,14 +7,14 @@
  */
 
 import { sanitizeTicketContent } from '../../security';
-import { langOf, lessonLabel, sectionTitle } from '../i18n';
-import { BriefInput, LessonRecord } from '../inputs';
+import { langOf, lessonLabel, sectionTitle, t } from '../i18n';
+import { BriefInput, BriefLesson } from '../inputs';
 import { SectionSpec, rankOf, sourcedItem } from '../sectionBuilder';
 
 const NAME = 'Leçons' as const;
 
 /** Leçons du projet, les plus récentes d'abord. */
-export function sortedLessons(lessons: LessonRecord[]): LessonRecord[] {
+export function sortedLessons(lessons: BriefLesson[]): BriefLesson[] {
   return lessons
     .slice()
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -25,7 +25,13 @@ export function buildLessons(input: BriefInput): SectionSpec {
   const items = sortedLessons(input.lessons).map((lesson) => {
     const text = sanitizeTicketContent(lesson.text, lesson.component, lesson.createdAt).trim();
     const component = lesson.component ? ` [${lesson.component}]` : '';
-    return sourcedItem(`${text}${component}`, lessonLabel(lesson.id, lang), lesson.createdAt);
+    // Même motif que les décisions : une leçon ancienne reste affichée, mais
+    // elle est marquée « à confirmer » plutôt que présentée comme acquise.
+    const stale = lesson.stale ? t('staleLabel', lang) : '';
+    return {
+      ...sourcedItem(`${text}${component}${stale}`, lessonLabel(lesson.id, lang), lesson.createdAt),
+      stale: Boolean(lesson.stale),
+    };
   });
   return {
     name: NAME,

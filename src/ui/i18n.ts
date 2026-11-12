@@ -52,8 +52,16 @@ export const STRINGS = {
   metricConfirmed: { fr: 'Comptes rendus confirmés sans correction', en: 'Reports confirmed without correction' },
   metricClarifications: { fr: 'Clarifications demandées plutôt que devinées', en: 'Clarifications asked instead of guessed' },
   metricRepeated: { fr: 'Tentatives répétées évitées', en: 'Repeated attempts avoided' },
-  metricRateHint: { fr: 'sur les 30 derniers jours', en: 'over the last 30 days' },
-  metricCountHint: { fr: 'grâce au brief précalculé', en: 'thanks to pre-computed briefs' },
+  metricConfirmedHint: { fr: 'sur {count} comptes rendus relus', en: 'over {count} reviewed reports' },
+  metricClarificationsHint: {
+    fr: 'sur {count} incertitudes : questions posées ou hypothèses prises',
+    en: 'over {count} uncertainties: asked or assumed',
+  },
+  metricRepeatedHint: {
+    fr: 'sur {count} tickets dont le brief a été servi',
+    en: 'over {count} issues with a served brief',
+  },
+  metricNoData: { fr: '— données insuffisantes', en: '— insufficient data' },
   topGapsTitle: { fr: 'Manques les plus fréquents du projet', en: 'Most frequent project gaps' },
   topGapsOccurrences: { fr: '{count} ticket(s)', en: '{count} issue(s)' },
   sectionReady: { fr: 'Tickets prêts', en: 'Ready issues' },

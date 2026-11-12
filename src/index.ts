@@ -24,12 +24,15 @@ import { postWorkReport } from './actions/postWorkReport';
 import { recordFailedAttempt } from './actions/recordFailedAttempt';
 import { claimWork } from './actions/claimWork';
 
-import { loadReadiness, loadAttempts, loadProjectSettings, saveProjectSettings, saveReview, loadReviews } from './storage';
+import { loadReadiness, loadAttempts, loadProjectSettings, saveProjectSettings, loadReviews } from './storage';
 import { loadBrief } from './storage';
 import { computeReadiness } from './readiness';
 import { buildBrief } from './brief';
 import { collectIssue, collectProjectSettings } from './collect/issueCollector';
 import { defaultEventHandlers, runConsumerForEvent, runScheduledDrain } from './events';
+import { recordReview } from './review';
+import type { RecordReviewResult, ReviewVerdict } from './review';
+import { projectMetrics, toUiProjectMetrics } from './metrics';
 
 // --------------------------------------------------------------------- actions
 export {
@@ -92,34 +95,52 @@ resolver.define('getProjectPage', async ({ context }: any) => {
   const projectKey = projectKeyFromContext(context);
   if (!projectKey) return { error: 'Clé de projet absente du contexte.' };
   const settings = await loadProjectSettings(projectKey);
-  return { projectKey, settings, metrics: null };
+  const metrics = await projectMetrics(projectKey);
+  return {
+    projectKey,
+    settings,
+    metrics: toUiProjectMetrics(metrics),
+    // Dénominateurs et drapeaux « données insuffisantes » : l'écran s'en sert
+    // pour afficher « — » plutôt qu'un pourcentage inventé.
+    metricsDetail: metrics,
+  };
 });
 
-resolver.define('confirmReport', async ({ payload }: any) => {
-  await saveReview({
-    id: payload?.reviewId ?? `review-${payload?.attemptId}-${Date.now()}`,
-    issueKey: payload?.issueKey ?? '',
-    attemptId: payload?.attemptId,
-    reviewerName: payload?.accountId ?? 'inconnu',
-    verdict: 'confirmé',
-    commentMd: payload?.note ?? '',
-    createdAt: new Date().toISOString(),
-  });
-  return { ok: true };
-});
+/** Réponse d'une revue : ce qui a été écrit, et la leçon qui en est issue. */
+function reviewPayload(result: RecordReviewResult) {
+  return {
+    ok: true,
+    reviewId: result.review.id,
+    lessonCreated: result.lessonCreated,
+    lessonId: result.lesson?.id ?? null,
+    lessonSkippedReason: result.lessonSkippedReason,
+  };
+}
 
-resolver.define('correctReport', async ({ payload }: any) => {
-  await saveReview({
-    id: payload?.reviewId ?? `review-${payload?.attemptId}-${Date.now()}`,
-    issueKey: payload?.issueKey ?? '',
-    attemptId: payload?.attemptId,
-    reviewerName: payload?.accountId ?? 'inconnu',
-    verdict: 'corrigé',
-    commentMd: payload?.note ?? '',
-    createdAt: new Date().toISOString(),
+/**
+ * Revue d'un compte rendu : seul le verdict change entre confirmation et
+ * correction, tout le reste est partagé (zéro duplication). `recordReview`
+ * enregistre la revue **et** transforme une correction exploitable en leçon
+ * réutilisable (BC-14).
+ */
+async function reviewFromPayload(payload: any, verdict: ReviewVerdict) {
+  return recordReview({
+    attemptId: String(payload?.attemptId ?? ''),
+    issueKey: String(payload?.issueKey ?? ''),
+    reviewerName: String(payload?.accountId ?? 'inconnu'),
+    verdict,
+    note: typeof payload?.note === 'string' ? payload.note : '',
+    component: typeof payload?.component === 'string' ? payload.component : undefined,
   });
-  return { ok: true };
-});
+}
+
+resolver.define('confirmReport', async ({ payload }: any) =>
+  reviewPayload(await reviewFromPayload(payload, 'confirmé'))
+);
+
+resolver.define('correctReport', async ({ payload }: any) =>
+  reviewPayload(await reviewFromPayload(payload, 'corrigé'))
+);
 
 resolver.define('refreshReadiness', async ({ context }: any) => {
   const issueKey = issueKeyFromContext(context);

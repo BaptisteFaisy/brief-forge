@@ -182,6 +182,59 @@ describe('Écran jira:projectPage « Travail des agents »', () => {
     expect(text).toContain('16');
   });
 
+  it('affiche « — données insuffisantes » plutôt qu’un 0 % inventé', () => {
+    const text = textOf(renderProjectPagePure({
+      ...props,
+      metrics: {
+        ...MOCK_PROJECT_METRICS,
+        confirmedWithoutCorrectionRate: null,
+        clarificationsAskedVsGuessedRate: null,
+      },
+    }));
+
+    expect(text).toContain('— données insuffisantes');
+    expect(text).not.toContain('0 %');
+  });
+
+  it('en anglais, le manque de données est dit en anglais', () => {
+    // `renderProjectPagePure` fige la vue en français : on rend directement avec
+    // une vue anglaise pour exercer la langue de l'écran.
+    const text = textOf(renderProjectPage(
+      {
+        ...props,
+        metrics: { ...MOCK_PROJECT_METRICS, confirmedWithoutCorrectionRate: null },
+      },
+      { language: 'en' },
+      { onToggleLanguage: noop }
+    ));
+
+    expect(text).toContain('— insufficient data');
+    expect(text).toContain('Reports confirmed without correction');
+  });
+
+  it('légende chaque taux par son dénominateur réel, pas par une fenêtre inventée', () => {
+    const text = textOf(renderProjectPagePure({
+      ...props,
+      metricsDetail: {
+        confirmedWithoutCorrection: { denominator: 12, insufficientData: false },
+        clarificationsAskedVsGuessed: { denominator: 7, insufficientData: false },
+        repeatedAttemptsAvoided: { denominator: 40, insufficientData: false },
+      },
+    }));
+
+    expect(text).toContain('sur 12 comptes rendus relus');
+    expect(text).toContain('sur 7 incertitudes');
+    expect(text).toContain('sur 40 tickets dont le brief a été servi');
+    expect(text).not.toContain('30 derniers jours');
+  });
+
+  it('sans détail du résolveur, aucune légende n’est inventée', () => {
+    const text = textOf(renderProjectPagePure(props));
+
+    expect(text).not.toContain('comptes rendus relus');
+    expect(text).not.toContain('30 derniers jours');
+  });
+
   it('liste les manques les plus fréquents, triés par fréquence', () => {
     const text = textOf(renderProjectPagePure(props));
     const counts = MOCK_PROJECT_METRICS.topGaps.map((gap) => gap.count);
