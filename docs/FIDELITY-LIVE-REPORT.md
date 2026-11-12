@@ -95,10 +95,111 @@ réels : **aucun**.
   en `asApp()` depuis une installation Jira ; les décisions en commentaire, elles,
   remontent bien (§ 7.1 rang 3). La lecture Confluence reste à valider en
   `asUser()` — c'est l'objet de la validation § 15(e).
-- **Pas de condensation par modèle** dans ces mesures : le condenseur rend le
-  texte d'origine tant qu'aucun modèle n'est branché. Les budgets sont tenus
-  quand même (les tickets réels sont courts), mais la mesure devra être rejouée
-  une fois la condensation active.
+- **Pas de condensation par modèle** dans ces 93 mesures : le condenseur rendait
+  le texte d'origine, aucun modèle n'étant branché. Depuis, le modèle est branché
+  et **prouvé en runtime**, mais il reste inerte sur ce jeu — aucun élément
+  n'atteint le plafond qui déclenche l'appel. Voir « Complément du 12 novembre »
+  ci-dessous : la mesure des 93 briefs reste valable telle quelle.
+
+## Complément du 12 novembre — app v5.1.0 (modèle branché, langue, scopes)
+
+Les trois lots fusionnés après la mesure ci-dessus (`#34` condensation + langue
+du ticket, `#35` UI Kit 2, `#38` scopes Teamwork Graph + trigger planifié +
+verrou) ont été redéployés sur `development` avec la sonde, puis re-mesurés.
+
+### Le modèle hébergé répond en runtime
+
+Le chemin `@forge/llm` est prouvé **dans le runtime réel**, pas seulement sur
+doublure. La sonde expose `cmd=llm`, qui isole les quatre étapes dans l'ordre où
+le moteur les emprunte :
+
+| Étape | Résultat |
+|---|---|
+| Modèles exposés par le runtime | **8**, tous `active` |
+| Modèle choisi par le moteur | `claude-haiku-4-5-20251001` — le plus économique des `active`, comme le veut la règle de choix |
+| Repli déclaré | `claude-haiku-4-5` |
+| Complétion directe (hors moteur) | **845 ms** |
+| Condensation : 648 jetons, budget 60 | **54 jetons rendus en 861 ms**, `condensed: true` |
+
+### La condensation ne se déclenche pas sur ce jeu — mesuré, pas supposé
+
+Le moteur ne consulte le modèle que lorsqu'un élément dépasse le plafond par
+budget (`ITEM_CAP_TOKENS` dans `src/brief/builder.ts` : **80 / 160 / 320**
+jetons). Aucun élément des tickets de ce site ne l'atteint. Cinq tickets
+re-capturés × 3 budgets, comparés aux captures d'origine :
+
+| Tickets | Markdown avant → après |
+|---|---|
+| PAY-6, PAY-17, MOBL-2 | **identique** (2612 / 2172 / 2022 caractères) |
+| ITO-1, ITO-2 | différent — la **langue**, pas la condensation (ci-dessous) |
+
+Le delta des deux tickets ITO est **identique sur les trois budgets**, ce qui
+exclut la condensation (elle dépend du plafond, donc du budget) et signe un
+changement déterministe de libellés.
+
+Conséquence honnête : la mesure des 93 briefs reste valable telle quelle. Pour
+exercer la condensation sur le réel, il faudrait un ticket dont un élément
+dépasse 320 jetons.
+
+### Le brief suit la langue du ticket (prouvé sur données réelles)
+
+ITO-1 et ITO-2 sont des tickets **anglais** : leur brief est désormais rendu en
+anglais de bout en bout, dates comprises —
+
+```diff
+- # Brief de travail — ITO-1 (budget l, cible ≈ 8000 jetons)
++ # Work brief — ITO-1 (budget l, target ≈ 8000 tokens)
+- _Construit le 12 novembre 2026 · [System] Service request · statut Resolved · projet ITO_
++ _Built on 12 November 2026 · [System] Service request · status Resolved · project ITO_
+- _Aucun critère d'acceptation dans le ticket : à obtenir avant de coder._
++ _No acceptance criteria in the issue: get them before coding._
+- _Jira ITO-1 — 11 août 2021_
++ _Jira ITO-1 — 11 August 2021_
+```
+
+Les tickets français (PAY, MOBL) sont **inchangés**, et dans les deux langues le
+contenu tiers cité — résumé, description, commentaires — n'est pas traduit :
+seuls les libellés produits par le moteur changent.
+
+### Re-mesure de fidélité sur ces 5 tickets (15 briefs)
+
+| Indicateur | Cible | Résultat |
+|---|---|---|
+| Éléments analysés | — | 54 |
+| Éléments sans source ni date | 0 | **0** |
+| Éléments introuvables (inventés) | **0** | **0** |
+| Budgets tenus à ±10 % | 100 % | **15 / 15** |
+| Troncatures non nommées | 0 | **0** |
+| Fuite d'instruction | 0 | **0** |
+| Fuite de secret | 0 | **0** |
+| Contenu écarté signalé | toujours | 3 briefs (PAY-6, pièges semés) |
+| Score de préparation cohérent | 100 % | **5 / 5** |
+| Durée d'un brief | < 40 s | médiane **1,15 s**, max 1,47 s |
+
+Les 5 tickets gardent leur erreur de collecte « voisins : Accès refusé »,
+signalée comme trou plutôt que comblée — la dégradation honnête tient toujours
+après les trois lots.
+
+### Scopes Teamwork Graph déployés, chemin utilisateur toujours non exercé
+
+Les 6 scopes `read:graph:*` sont déployés et consentis (`forge install
+--upgrade`), et `forge lint` ne signale plus le warning `teamwork-graph-scopes`.
+**Mais** la sonde tourne en `asApp()` et `requestTeamworkGraph` n'existe que dans
+`AsUserFetchMethods` : le chemin graphe reste donc non exercé ici, et les 5
+re-captures renvoient toujours `voisins : Accès refusé`. La limite « acteur
+`asApp` » décrite plus haut est **inchangée** — l'ajout des scopes est une
+condition nécessaire, pas une validation.
+
+### Reproduire ce complément
+
+```bash
+# Preuve du chemin modèle (aucune écriture, aucun ticket touché)
+curl -s "$URL?token=$PROBE_TOKEN&cmd=llm&repeats=12&budget=60"
+
+# Re-capture et comparaison
+curl -s "$URL?token=$PROBE_TOKEN&cmd=full&issue=ITO-1&budgets=s,m,l" > captures-2/ITO-1.json
+python3 scripts/live-fidelity.py captures-2/ > resultat-2.json
+```
 
 ## Reproduire
 
