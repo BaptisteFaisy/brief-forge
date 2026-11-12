@@ -7,7 +7,8 @@
  * - une étape sans README, ou dont le README ne dit pas ce qu'elle ne prouve
  *   pas ;
  * - une preuve contenant un motif de secret ;
- * - une étape absente de l'index de son paquet.
+ * - une étape absente de l'index de son paquet ;
+ * - un item de la liste des dix sans ligne de preuve.
  *
  * Structure : `docs/evidence/<paquet>/<étape>/<artefact>`. La convention est
  * décrite dans `docs/PREUVES.md`.
@@ -21,6 +22,20 @@ const PREUVES = join(RACINE, 'docs', 'evidence');
 
 const MOTIFS_SECRET =
   /(ghp_[A-Za-z0-9]{36}|sk-[A-Za-z0-9_-]{24,}|sk_[a-f0-9]{32}|AKIA[0-9A-Z]{16}|BEGIN [A-Z ]*PRIVATE KEY)/;
+
+/** Les dix items du cahier des charges, dans l'ordre. */
+const ITEMS = [
+  '01',
+  '02',
+  '03',
+  '04',
+  '05',
+  '06',
+  '07',
+  '08',
+  '09',
+  '10',
+];
 
 function sousDossiers(base: string): string[] {
   return readdirSync(base).filter((nom) => statSync(join(base, nom)).isDirectory());
@@ -112,6 +127,22 @@ describe('paquet de preuves', () => {
       for (const etape of sousDossiers(join(PREUVES, paquet))) {
         expect({ etape, indexee: index.includes(etape) }).toEqual({ etape, indexee: true });
       }
+    }
+  });
+
+  it('les dix items ont chacun une ligne de preuve', () => {
+    const table = join(PREUVES, '2026-11-12', 'items-01-10.md');
+    expect(existsSync(table)).toBe(true);
+    const texte = readFileSync(table, 'utf8');
+    for (const item of ITEMS) {
+      const ligne = texte.split('\n').find((l) => l.startsWith(`| ${item} `));
+      expect({ item, presente: Boolean(ligne) }).toEqual({ item, presente: true });
+      // Une ligne de preuve cite une PR : sans elle, l'item n'est qu'une
+      // affirmation.
+      expect({ item, citeUnePR: Boolean(ligne && /#[0-9]+/.test(ligne)) }).toEqual({
+        item,
+        citeUnePR: true,
+      });
     }
   });
 

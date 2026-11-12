@@ -18,6 +18,10 @@ La mesure de fidélité sur 31 tickets réels (étape antérieure) reste dans
 [`live-fidelity-2026-11.json`](live-fidelity-2026-11.json) ; son analyse et ses
 limites sont dans [`FIDELITY-LIVE-REPORT.md`](../FIDELITY-LIVE-REPORT.md).
 
+Le point d'entrée du paquet est la table des dix items :
+[`items-01-10.md`](items-01-10.md) — pour chacun, la PR, ce qui le prouve, où
+le lire, et **ce qui n'a pas de preuve live**.
+
 ## Règles de ce paquet
 
 1. **Chaque artefact est une sortie brute**, jamais une reformulation. Ce qui
