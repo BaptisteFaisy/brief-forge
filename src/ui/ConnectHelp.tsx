@@ -1,9 +1,12 @@
-/** @jsx ForgeUI.createElement */
-import ForgeUI, { Code, Fragment, Heading, SectionMessage, Strong, Text, useState } from '@forge/ui';
+import React, { useState } from 'react';
+import { CodeBlock, Heading, Stack, Text } from '@forge/react';
 import { Language } from './data';
 import { t } from './i18n';
 import { SimpleView, toggleLanguage } from './state';
+import { Notice } from './components/Notice';
 import { PageHeader } from './components/PageHeader';
+import { Screen, Section } from './components/Screen';
+import { Strong } from './components/Strong';
 
 export const MCP_HOST = 'https://mcp.atlassian.com/forge/';
 
@@ -44,7 +47,7 @@ export function renderConnectHelp(props: ConnectHelpProps, view: SimpleView, han
   const url = mcpServerUrl(props.appId);
 
   return (
-    <Fragment>
+    <Screen>
       <PageHeader
         title={t('connectTitle', language)}
         subtitle={t('connectIntro', language)}
@@ -52,30 +55,37 @@ export function renderConnectHelp(props: ConnectHelpProps, view: SimpleView, han
         onToggleLanguage={handlers.onToggleLanguage}
       />
 
-      <Heading size="small">{t('serverAddressLabel', language)}</Heading>
-      <Code text={url} language="text" />
-      <Text>{t('addressHint', language)}</Text>
+      <Section>
+        <Heading size="small">{t('serverAddressLabel', language)}</Heading>
+        <CodeBlock text={url} language="text" />
+        <Text>{t('addressHint', language)}</Text>
+      </Section>
 
-      <Heading size="small">{t('adminStepsTitle', language)}</Heading>
-      {ADMIN_STEP_KEYS.map((key, index) => (
-        <Text key={key}>
-          <Strong>{`${index + 1}.`}</Strong> {t(key, language)}
-        </Text>
-      ))}
+      <Section>
+        <Heading size="small">{t('adminStepsTitle', language)}</Heading>
+        <Stack space="space.050">
+          {ADMIN_STEP_KEYS.map((key, index) => (
+            <Text key={key}>
+              <Strong>{`${index + 1}.`}</Strong>
+              {` ${t(key, language)}`}
+            </Text>
+          ))}
+        </Stack>
+      </Section>
 
-      <Heading size="small">{t('clientCommandsTitle', language)}</Heading>
-      <SectionMessage appearance="info">
-        <Text>{t('copyHint', language)}</Text>
-      </SectionMessage>
-      {clientCommands(props.appId).map((entry) => (
-        <Fragment key={entry.client}>
-          <Text>
-            <Strong>{entry.client}</Strong>
-          </Text>
-          <Code text={entry.command} language="text" />
-        </Fragment>
-      ))}
-    </Fragment>
+      <Section>
+        <Heading size="small">{t('clientCommandsTitle', language)}</Heading>
+        <Notice appearance="information" text={t('copyHint', language)} />
+        <Stack space="space.100">
+          {clientCommands(props.appId).map((entry) => (
+            <Stack key={entry.client} space="space.025">
+              <Strong>{entry.client}</Strong>
+              <CodeBlock text={entry.command} language="text" />
+            </Stack>
+          ))}
+        </Stack>
+      </Section>
+    </Screen>
   );
 }
 

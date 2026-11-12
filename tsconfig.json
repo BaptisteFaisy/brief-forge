@@ -4,7 +4,11 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "lib": ["ES2022"],
-    "jsx": "react",
+    // `react-jsx` : runtime JSX automatique de React 18 (plus de pragma
+    // `@jsx ForgeUI.createElement` dans les .tsx). Les .tsx importent quand
+    // même `React` — la config Jest du dépôt compile en runtime `classic`
+    // (@swc/jest), qui a besoin de l'identifiant `React` dans la portée.
+    "jsx": "react-jsx",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

@@ -1,8 +1,9 @@
-/** @jsx ForgeUI.createElement */
-import ForgeUI, { Badge, Fragment, StatusLozenge, Strong, Text } from '@forge/ui';
+import React from 'react';
+import { Badge, Inline, Lozenge, Stack, Text } from '@forge/react';
 import { Language, UIAttemptItem } from '../data';
 import { tf, t } from '../i18n';
 import { ConfirmButtons } from './ConfirmButtons';
+import { Strong } from './Strong';
 
 export interface AttemptHistoryProps {
   attempts: UIAttemptItem[];
@@ -20,6 +21,42 @@ const STATUS_APPEARANCE: Record<string, 'success' | 'moved' | 'removed' | 'defau
   'abandonné': 'default',
 };
 
+/** Une tentative : titre, statut, vérification par tests, critères, tests. */
+function AttemptRow({
+  attempt,
+  index,
+  total,
+  language,
+}: {
+  attempt: UIAttemptItem;
+  index: number;
+  total: number;
+  language: Language;
+}) {
+  return (
+    <Stack space="space.050">
+      <Strong>
+        {tf('attemptLine', language, {
+          index: total - index,
+          agent: attempt.agentName,
+          date: attempt.startedAt,
+        })}
+      </Strong>
+      <Inline space="space.100" alignBlock="center">
+        <Lozenge appearance={STATUS_APPEARANCE[attempt.status] ?? 'default'}>{attempt.status}</Lozenge>
+        <Badge appearance={attempt.hasTests ? 'added' : 'important'}>
+          {attempt.hasTests ? t('verifiedByTests', language) : t('notVerifiedByTests', language)}
+        </Badge>
+      </Inline>
+      <Text>
+        {tf('criteriaCovered', language, { value: attempt.criteriaCovered || t('noneValue', language) })}
+      </Text>
+      <Text>{tf('testsResult', language, { value: attempt.testsPassed || t('noneValue', language) })}</Text>
+    </Stack>
+  );
+}
+
+/** Historique des tentatives du ticket, la plus récente d'abord. */
 export const AttemptHistory = ({
   attempts,
   language = 'fr',
@@ -28,38 +65,19 @@ export const AttemptHistory = ({
   onCorrect,
 }: AttemptHistoryProps) => {
   if (attempts.length === 0) {
-    return (
-      <Text>{t('noAttempts', language)}</Text>
-    );
+    return <Text>{t('noAttempts', language)}</Text>;
   }
 
   return (
-    <Fragment>
+    <Stack space="space.200">
       {attempts.map((attempt, index) => (
-        <Fragment key={attempt.id}>
-          <Text>
-            <Strong>
-              {tf('attemptLine', language, { index: attempts.length - index, agent: attempt.agentName, date: attempt.startedAt })}
-            </Strong>
-          </Text>
-          <StatusLozenge text={attempt.status} appearance={STATUS_APPEARANCE[attempt.status] ?? 'default'} />
-          {attempt.hasTests ? (
-            <Badge text={t('verifiedByTests', language)} appearance="added" />
-          ) : (
-            <Badge text={t('notVerifiedByTests', language)} appearance="important" />
-          )}
-          <Text>{tf('criteriaCovered', language, { value: attempt.criteriaCovered || t('noneValue', language) })}</Text>
-          <Text>{tf('testsResult', language, { value: attempt.testsPassed || t('noneValue', language) })}</Text>
+        <Stack key={attempt.id} space="space.050">
+          <AttemptRow attempt={attempt} index={index} total={attempts.length} language={language} />
           {attempt.id === latestId && onConfirm && onCorrect ? (
-            <ConfirmButtons
-              attempt={attempt}
-              language={language}
-              onConfirm={onConfirm}
-              onCorrect={onCorrect}
-            />
+            <ConfirmButtons attempt={attempt} language={language} onConfirm={onConfirm} onCorrect={onCorrect} />
           ) : null}
-        </Fragment>
+        </Stack>
       ))}
-    </Fragment>
+    </Stack>
   );
 };
