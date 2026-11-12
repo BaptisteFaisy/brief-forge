@@ -334,16 +334,21 @@ jobs:
           # `--jq '…'` ferme le guillemet simple et gh meurt sur « unknown
           # arguments » (vécu le 29/10 : `discover` rendait une matrice vide en
           # silence et plus aucune PR n'était balayée).
-          FILTRE='[.[] | select(.headRepository.nameWithOwner == "BaptisteFaisy/brief-forge")
+          # Pas de nom codé en dur ici : suite au renommage du compte
+          # (BaptisteFaisy → Tradoooo, 12 novembre 2026), le filtre comparait
+          # `headRepository.nameWithOwner` à l'ancien nom, ne voyait plus aucune
+          # PR et mettait la file en pause (« inventaire des PR vide alors que
+          # des PR sont ouvertes »). La valeur est lue depuis l'environnement.
+          FILTRE="[.[] | select(.headRepository.nameWithOwner == \"$GITHUB_REPOSITORY\")
             | {pr: .number, sha: .headRefOid, branch: .headRefName,
                state: .mergeStateStatus, draft: (.isDraft | tostring),
                main: .baseRefOid, maj: .updatedAt}]
-            | (map(select(.state == "CLEAN" and .draft == "false"))) as $pretes
-            | if ($pretes | length) > 0
-              then map(select(.state != "BEHIND"))
-              else map(select(.state != "BEHIND"))
-                   + (map(select(.state == "BEHIND")) | sort_by(.maj) | .[0:1])
-              end'
+            | (map(select(.state == \"CLEAN\" and .draft == \"false\"))) as \$pretes
+            | if (\$pretes | length) > 0
+              then map(select(.state != \"BEHIND\"))
+              else map(select(.state != \"BEHIND\"))
+                   + (map(select(.state == \"BEHIND\")) | sort_by(.maj) | .[0:1])
+              end"
           # Une liste illisible doit être ROUGE, pas vide : une matrice vide
           # passait pour « aucune PR à balayer » et la file se taisait.
           # ── inventaire en REST (v19) ────────────────────────────────────
@@ -468,7 +473,7 @@ jobs:
           # v28 — `0` rend la réparation d'un test rouge au balayeur (le
           # workflow `triage-rouge` la prend sinon, avec l'indice du triage).
           TRIAGE_TEST: ${{ vars.TRIAGE_TEST }}
-          REPO: BaptisteFaisy/brief-forge
+          REPO: ${{ github.repository }}
           PR: ${{ matrix.pr }}
           SHA: ${{ matrix.sha }}
           BRANCH: ${{ matrix.branch }}
