@@ -1,0 +1,32 @@
+{
+ "issueKey": "PAY-6",
+ "score": 39,
+ "ready": false,
+ "status": "non prêt",
+ "gaps": [
+  {
+   "criterion": "Critères d'acceptation vérifiables",
+   "pointsLost": 30,
+   "reason": "aucun critère d'acceptation : rien ne dit quand le travail est terminé."
+  },
+  {
+   "criterion": "Périmètre borné",
+   "pointsLost": 15,
+   "reason": "description absente ou squelettique : le périmètre n'est pas écrit, donc pas borné."
+  },
+  {
+   "criterion": "Composant identifié",
+   "pointsLost": 10,
+   "reason": "aucun composant ni zone identifié : l'agent ne sait pas où chercher le code et partira en exploration."
+  },
+  {
+   "criterion": "Objectif écrit",
+   "pointsLost": 6,
+   "reason": "description absente ou squelettique : sans objectif écrit, aucun travail n'est évaluable ; le score est plafonné à 39 tant que la description n'est pas rédigée."
+  }
+ ],
+ "advice": "Non prêt : écrire 2 à 5 critères d'acceptation observables (ex. « le bouton Export renvoie un CSV de moins de 5 Mo ») ; puis ramener le ticket à un seul objectif et un seul composant, découper le reste en tickets liés. Sans cela, un agent travaillerait sur des hypothèses fausses.",
+ "capturedAt": "2026-11-11T18:40:00Z",
+ "site": "one-atlas-cndz.atlassian.net",
+ "durationMs": 1312
+}

@@ -10,7 +10,7 @@
 module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/src', '<rootDir>/test'],
-  testMatch: ['**/*.test.ts', '**/*.test.tsx'],
+  testMatch: ['**/*.test.ts', '**/*.test.tsx', '**/site/**/*.test.js'],
   maxWorkers: 4,
   transform: {
     '^.+\\.(t|j)sx?$': ['@swc/jest', {

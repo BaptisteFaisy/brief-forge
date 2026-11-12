@@ -374,7 +374,13 @@ describe('fidélité du brief sur les 30 fixtures (contrat § 4)', () => {
   afterAll(() => {
     const generatedOn = runStartedAt.toISOString().slice(0, 10);
     mkdirSync(join(__dirname, '..', '..', 'docs'), { recursive: true });
-    writeFileSync(REPORT_PATH, renderReport(results, generatedOn), 'utf8');
+    // Écriture sur demande explicite seulement (`npm run fidelity`) : un simple
+    // `npx jest` ne doit pas réécrire un fichier versionné — l'en-tête du brief
+    // porte la date du jour, donc le rapport change chaque journée et salit
+    // l'arbre de travail de tous les lots parallèles.
+    if (process.env.WRITE_FIDELITY_REPORT === '1') {
+      writeFileSync(REPORT_PATH, renderReport(results, generatedOn), 'utf8');
+    }
   });
 
   it('dispose des 30 fixtures du contrat', () => {

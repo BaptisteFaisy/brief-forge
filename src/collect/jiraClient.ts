@@ -9,7 +9,7 @@
  * commentaires en texte brut (la v3 renvoie de l'ADF, converti au besoin).
  */
 
-import { sanitizeTicketContent } from '../security';
+import { isDiscardedNotice, sanitizeTicketContent } from '../security';
 import {
   asArray,
   asRecord,
@@ -194,12 +194,14 @@ export function parseComments(value: unknown): IssueComment[] {
       const comment = asRecord(raw);
       const author = personName(comment.author) || 'inconnu';
       const createdAt = parseIsoDate(comment.created);
+      const body = sanitizeTicketContent(adfToText(comment.body), author, createdAt);
       return {
         id: asString(comment.id),
         author,
         createdAt,
-        body: sanitizeTicketContent(adfToText(comment.body), author, createdAt),
+        body,
         visibility: commentVisibility(comment),
+        discarded: isDiscardedNotice(body),
       };
     })
     .filter((comment) => comment.id !== '');
