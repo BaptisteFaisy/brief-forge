@@ -121,6 +121,15 @@ le moteur les emprunte :
 | Complétion directe (hors moteur) | **845 ms** |
 | Condensation : 648 jetons, budget 60 | **54 jetons rendus en 861 ms**, `condensed: true` |
 
+> **Coût, vérifié depuis.** L'API Forge LLMs n'inclut **aucun quota gratuit** :
+> « *All token usage is billed* », à la charge du développeur de l'app (Haiku
+> 4.5 = 10 crédits/M jetons, soit 1 $/M en entrée et 5 $/M en sortie). La
+> condensation est donc **désactivée par défaut** dans le code
+> (`llmCondensationEnabled`, `src/brief/defaults.ts`) et ne s'allume que sur
+> `BRIEF_LLM_CONDENSATION=1` + redéploiement. La mesure ci-dessus a été obtenue
+> avec le chemin explicitement allumé ; le détail et la procédure sont dans
+> `docs/DEPLOY.md` § 8.1.
+
 ### La condensation ne se déclenche pas sur ce jeu — mesuré, pas supposé
 
 Le moteur ne consulte le modèle que lorsqu'un élément dépasse le plafond par
