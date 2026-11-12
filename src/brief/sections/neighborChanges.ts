@@ -3,10 +3,11 @@
  *
  * Pull requests et commits proches du ticket (même zone / même composant) :
  * ils disent à l'agent ce qui a bougé récemment dans le code qu'il s'apprête
- * à toucher.
+ * à toucher. Les titres et URL sont du contenu tiers : jamais traduits.
  */
 
 import { sanitizeTicketContent } from '../../security';
+import { changeLabel, langOf, sectionTitle } from '../i18n';
 import { BriefInput, NeighborChange } from '../inputs';
 import { SectionSpec, rankOf, sourcedItem } from '../sectionBuilder';
 
@@ -27,16 +28,17 @@ export function sortedNeighbors(changes: NeighborChange[]): NeighborChange[] {
 }
 
 export function buildNeighborChanges(input: BriefInput): SectionSpec {
+  const lang = langOf(input);
   const items = sortedNeighbors(input.neighbors).map((change) =>
-    sourcedItem(changeText(change), `Changement ${change.author}`, change.date)
+    sourcedItem(changeText(change), changeLabel(change.author, lang), change.date)
   );
   return {
     name: NAME,
     rank: rankOf(NAME),
-    title: NAME,
+    title: sectionTitle(NAME, lang),
     tool: 'get-neighbor-changes',
     kind: 'bullets',
+    lang,
     items,
-    emptyNote: '_Aucun changement voisin détecté dans la zone du ticket._',
   };
 }

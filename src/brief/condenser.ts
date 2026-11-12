@@ -2,10 +2,19 @@
  * Condensation du brief.
  *
  * La condensation est faite **par modèle** (injecté via `BriefDeps.condense`)
- * pour raccourcir les textes longs sans perdre le sens. Deux garde-fous :
- *  - un élément conservé garde **son renvoi de source** (source + date) ;
- *  - un élément sans source est **supprimé** (BC-02), jamais « complété ».
- * Sans modèle disponible, on retombe sur le texte d'origine (`passthrough`).
+ * pour raccourcir les textes longs sans perdre le sens. En production, le
+ * condenseur est branché sur le modèle hébergé (`src/llm/`, câblé par
+ * `src/brief/defaults.ts`) ; sans modèle disponible, on retombe sur le texte
+ * d'origine (`passthroughCondenser`).
+ *
+ * Trois garde-fous :
+ *  - un élément conservé garde **son renvoi de source** (source + date), porté
+ *    par l'élément et jamais réécrit par le modèle ;
+ *  - un élément sans source est **supprimé** (BC-02), jamais « complété » ;
+ *  - le texte a **déjà** été nettoyé par `sanitizeTicketContent` quand il
+ *    arrive ici (collecte Jira/Confluence puis chaque section) : la
+ *    condensation est le dernier maillon, elle re-vérifie sans jamais élargir
+ *    (`boundInput` dans `src/llm/prompt.ts`).
  */
 
 import { SourcedItem } from '../types';
