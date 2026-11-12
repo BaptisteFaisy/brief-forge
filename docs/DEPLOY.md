@@ -362,8 +362,49 @@ l'activation de l'exposition externe par l'administrateur si le site l'exige.
 
 ### 8.1 Coûts Forge SQL et module `llm`
 - **Forge SQL (TiDB/MySQL)** : inclus dans la plateforme Forge jusqu'aux quotas gratuits par installation (dev : **128 MiB**, staging : **256 MiB**, prod : **1 GiB** de stockage ; 62,5 s de temps requête/min). Au-delà des seuils d'essai/gratuits Atlassian, facturation à l'usage de l'éditeur.
-- **Module `llm` (Claude via Atlassian)** : soumis aux quotas de jetons Atlassian Forge LLMs. Chaque invalidation déclenche la file de précalcul des budgets `s/m/l` uniquement sur les statuts déclencheurs configurés afin de maîtriser la consommation.
+- **Module `llm` (Claude via Atlassian)** : **aucun quota gratuit** — chaque jeton consommé est facturé au développeur de l'app. Le chemin est donc **éteint par défaut** : voir « Condensation par modèle » ci-dessous.
 - **Multi-apps** : l'ajout de Confluence (`read:confluence-content.all`) classe l'app en multi-apps ; si vous publiez sur le Marketplace sans besoin Confluence, retirez ce scope.
+
+#### Condensation par modèle : prix réel et interrupteur
+
+La documentation officielle de l'API Forge LLMs est explicite : *« No free usage
+allowance: The Forge LLMs API does not include a free monthly usage quota. All
+token usage is billed »*, et la consommation est **facturée au développeur de
+l'app**, pas au client. Les jetons sont convertis en crédits (0,10 $ le crédit
+d'entrée, 0,50 $ le crédit de sortie) :
+
+| Modèle | Crédits / 1 M jetons | Entrée / 1 M | Sortie / 1 M |
+|---|---|---|---|
+| Haiku 4.5 | 10 | 1 $ | 5 $ |
+| Sonnet 4.5 | 30 | 3 $ | 15 $ |
+| Opus 4.6 | 50 | 5 $ | 25 $ |
+
+Le moteur choisit toujours le modèle `active` **le plus économique** (Haiku 4.5
+en pratique) et borne l'entrée à 1 200 jetons par appel — mais cela reste un
+coût réel, répété à chaque brief construit.
+
+**Donc : la condensation est désactivée par défaut** (`llmCondensationEnabled`
+dans `src/brief/defaults.ts`). Éteinte, le moteur rend le texte d'origine
+tronqué au budget : comportement antérieur, aucun appel réseau, aucun coût.
+
+Pour l'allumer explicitement :
+
+```bash
+forge-atlassian variables set BRIEF_LLM_CONDENSATION 1 -e development
+# Redéploiement obligatoire : une variable Forge n'est prise en compte
+# qu'au déploiement suivant de cet environnement.
+forge-atlassian deploy -e development --non-interactive
+```
+
+Seul `1` allume le chemin ; `0`, `true` ou une chaîne vide le laissent éteint.
+Quatre tests verrouillent l'interrupteur (`test/brief/defaults.test.ts`) : il ne
+peut pas s'allumer tout seul, et `@forge/llm` n'est même pas requis tant qu'il
+est éteint.
+
+À noter pour le site de démo : la condensation ne s'y déclencherait de toute
+façon jamais, aucun élément n'atteignant le plafond par budget (80 / 160 / 320
+jetons, `ITEM_CAP_TOKENS` dans `src/brief/builder.ts`) — mesuré le 12 novembre
+sur 5 tickets × 3 budgets, voir `docs/FIDELITY-LIVE-REPORT.md`.
 
 ### 8.2 Retour arrière (désinstallation et suppression)
 

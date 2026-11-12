@@ -14,6 +14,7 @@
  */
 
 import type { BriefDeps } from './builder';
+import { passthroughCondenser } from './condenser';
 import type { CondenseFn } from './condenser';
 import type {
   DecisionRecord,
@@ -57,15 +58,44 @@ async function readSettings(projectKey: string): Promise<ProjectSettings> {
   return collectModule().collectProjectSettings(projectKey);
 }
 
+/** Variable d'environnement qui autorise la condensation par modèle. */
+export const LLM_CONDENSATION_ENV = 'BRIEF_LLM_CONDENSATION';
+
+/**
+ * La condensation par modèle est-elle autorisée ?
+ *
+ * Seul `1` l'allume : toute autre valeur (absente, `0`, `true`, chaîne vide)
+ * laisse le repli sans modèle. Un interrupteur binaire strict évite qu'une
+ * valeur approximative n'engage une dépense par accident.
+ */
+export function llmCondensationEnabled(
+  env: Record<string, string | undefined> = process.env
+): boolean {
+  return env[LLM_CONDENSATION_ENV] === '1';
+}
+
 /**
  * Condensation par modèle hébergé (lot langue/LLM).
  *
- * Une instance par construction de brief : le condenseur porte un **budget de
- * temps de session** (20 s par défaut), donc trois budgets précalculés restent
- * sous les 2 min visées par le consumer, et une action MCP sous ses 55 s.
- * Un échec d'appel ne remonte jamais : le moteur garde le texte d'origine.
+ * **Chemin facturé, donc éteint par défaut.** L'API Forge LLMs n'inclut aucun
+ * quota gratuit : chaque jeton consommé est facturé au développeur de l'app
+ * (Haiku 4.5 = 10 crédits par million de jetons, soit 1 $/M en entrée et 5 $/M
+ * en sortie ; Sonnet 4.5 = 30 crédits ; Opus 4.6 = 50 crédits). L'allumer
+ * d'office engagerait une dépense sans décision explicite : il faut poser
+ * `BRIEF_LLM_CONDENSATION=1` sur l'environnement visé **puis redéployer** (une
+ * variable Forge n'est prise en compte qu'au déploiement suivant).
+ *
+ * Éteinte, le moteur garde son comportement antérieur : le texte d'origine,
+ * tronqué au budget (`passthroughCondenser`) — aucun appel réseau, aucun coût.
+ *
+ * Allumée, une instance par construction de brief : le condenseur porte un
+ * **budget de temps de session** (20 s par défaut), donc trois budgets
+ * précalculés restent sous les 2 min visées par le consumer, et une action MCP
+ * sous ses 55 s. Un échec d'appel ne remonte jamais : le moteur garde le texte
+ * d'origine.
  */
 function createCondense(): CondenseFn {
+  if (!llmCondensationEnabled()) return passthroughCondenser;
   return llmModule().createModelCondenser();
 }
 
