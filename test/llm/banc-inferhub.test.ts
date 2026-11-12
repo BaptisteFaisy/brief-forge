@@ -17,7 +17,7 @@
  * (tickets fabriqués). Garde explicite : PAY-6 est exclu (il porte les pièges
  * semés, dont un faux jeton) et tout texte ressemblant à un secret est rejeté.
  */
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
@@ -117,6 +117,7 @@ function inferHubPort(stats: Stats): LlmPort {
 
 /** Texte long réel : descriptions du site de démo, sans piège ni secret. */
 function longTextFromCaptures(minChars: number): string {
+  if (!existsSync(CAPTURES)) return '';
   const parts: string[] = [];
   let total = 0;
   for (const file of readdirSync(CAPTURES).filter((f) => f.endsWith('.json')).sort()) {
@@ -138,10 +139,16 @@ function longTextFromCaptures(minChars: number): string {
 
 describeLive('banc InferHub : condensation réelle, hors app Forge', () => {
   const stats: Stats = { calls: 0, ms: 0, inputTokens: 0, outputTokens: 0 };
-  const text = longTextFromCaptures(1200);
+  // Le texte est construit **dans** un hook, pas dans le corps du `describe` :
+  // jest évalue le corps d'un `describe.skip` même si les tests ne tournent pas,
+  // et la lecture des captures doit donc rester paresseuse (le runner de CI
+  // n'a pas le dossier /tmp de la session).
+  let text = '';
 
   beforeAll(() => {
     if (!API_KEY) throw new Error('INFERHUB_API_KEY absente : banc inutilisable');
+    text = longTextFromCaptures(1200);
+    if (!text) throw new Error(`captures introuvables dans ${CAPTURES} : banc inutilisable`);
   });
 
   beforeEach(() => resetModelCache());
