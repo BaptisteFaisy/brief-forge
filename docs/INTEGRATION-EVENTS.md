@@ -65,10 +65,51 @@ export async function briefRebuildScheduled(): Promise<void> {
 Comportement : liste les tickets dont un brief stocké est périmé
 (`SELECT DISTINCT issue_key FROM brief WHERE stale = 1` via `getSqlClient()`
 et `TABLES` **déjà exportés** par `src/storage` — aucune modification du lot
-stockage), les remet en file avec la raison `scheduled-drain`, puis rejoue
-`consumeBriefQueue` : budget de temps existant (96 s par défaut), plafond de
-tickets, verrou par ticket et contrôle de fraîcheur inclus — **zéro logique
-dupliquée**. Un système sain coûte un SELECT par heure et rien d'autre.
+stockage), puis rejoue `consumeBriefQueue` sur cette liste : budget de temps
+existant (96 s par défaut), plafond de tickets, verrou par ticket et contrôle de
+fraîcheur inclus — **zéro logique dupliquée**. Un système sain coûte un SELECT
+par heure et rien d'autre.
+
+### ⚠️ Constat live du 12 novembre 2026 : GlobalStorage refusé en contexte planifié
+
+Le premier déclenchement réel du trigger (development, fonction
+`brief-rebuild-sched-fn`) a donné :
+
+```
+INFO  [brief-forge:events] Drain planifié : tickets périmés remis en file { stale: 0, enqueued: 0 }
+ERROR APIError: Request principal is not authorized to use storage resource
+    at StorageBriefQueue.list (src/events/queue.ts:118)
+    at consumeBriefQueue (src/events/consumer.ts:229)
+```
+
+Un `scheduledTrigger` s'exécute **sans contexte d'installation** : Forge SQL y
+fonctionne (le SELECT a rendu `stale: 0`), mais le **stockage global y est
+refusé**. La file persistante est donc inaccessible au drain — et le consumer
+qu'il rejouait commençait par `queue.list()`.
+
+Correctif appliqué (`src/events/memoryQueue.ts` + `src/events/staleDrain.ts`) :
+
+1. **rien de périmé → rien d'autre qu'un SELECT** : le drain journalise et
+   s'arrête, sans toucher aucun stockage (`skipped: true`) ;
+2. **quelque chose de périmé → file en mémoire** amorcée avec la liste SQL
+   (`MemoryBriefQueue`, même contrat `BriefQueuePort`, déduplication et abandon
+   au plafond compris), passée au consumer inchangé.
+
+Le verrou de construction n'était pas en cause : `acquireBuildLock`
+(`src/events/consumer.ts`) est déjà fail-open, une panne du verrou est
+journalisée et la construction continue.
+
+**Limites assumées de ce correctif** (les tests `test/events/staleDrain.test.ts`
+les verrouillent) :
+
+- un ticket en attente dans la file **persistante** n'est pas drainé par ce
+  chemin ; un ticket dont le brief n'a **jamais** été construit n'apparaît pas
+  dans la table `brief`, donc n'est pas rattrapé ici — c'est le rôle du consumer
+  déclenché par les événements ;
+- les entrées en mémoire ne survivent pas à l'exécution : un échec de
+  construction est repris au drain horaire suivant, le brief restant périmé en
+  base.
+
 
 > Suggestion au lot stockage : exposer un `listStaleBriefIssueKeys()` dans
 > `src/storage/index.ts` ; remplacer alors le corps de
