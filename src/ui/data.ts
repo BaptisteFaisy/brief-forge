@@ -32,10 +32,31 @@ export interface UIProjectIssue {
 }
 
 export interface UIProjectMetrics {
-  confirmedWithoutCorrectionRate: number; // e.g. 84 (%)
-  clarificationsAskedVsGuessedRate: number; // e.g. 92 (%)
+  /** `null` quand l'échantillon est insuffisant : l'écran affiche « — », jamais 0 %. */
+  confirmedWithoutCorrectionRate: number | null; // e.g. 84 (%)
+  clarificationsAskedVsGuessedRate: number | null; // e.g. 92 (%)
   repeatedAttemptsAvoidedCount: number; // e.g. 14
   topGaps: Array<{ labelFr: string; labelEn: string; count: number }>;
+}
+
+/** Ce que l'écran doit savoir d'un indicateur pour ne pas mentir sur sa base. */
+export interface UIMetricDetail {
+  /** Taille de l'échantillon : le dénominateur réel du taux affiché. */
+  denominator: number;
+  /** Vrai si l'échantillon est trop petit pour conclure. */
+  insufficientData: boolean;
+}
+
+/**
+ * Détail des trois indicateurs chiffrés, tel que renvoyé par le résolveur
+ * `getProjectPage` (`metricsDetail`). Les légendes s'appuient sur ces
+ * dénominateurs : annoncer « sur les 30 derniers jours » alors qu'aucune fenêtre
+ * temporelle n'est appliquée serait un mensonge.
+ */
+export interface UIProjectMetricsDetail {
+  confirmedWithoutCorrection: UIMetricDetail;
+  clarificationsAskedVsGuessed: UIMetricDetail;
+  repeatedAttemptsAvoided: UIMetricDetail;
 }
 
 export interface UIProjectSettingsFormData {

@@ -18,8 +18,8 @@ import { ProjectSettingsPage } from './ProjectSettingsPage';
 import { ConnectHelp } from './ConnectHelp';
 import { MOCK_ATTEMPTS, MOCK_BRIEF_DATA, MOCK_PROJECT_ISSUES, MOCK_PROJECT_METRICS,
   MOCK_PROJECT_SETTINGS } from './data';
-import type { UIAttemptItem, UIProjectIssue, UIProjectMetrics,
-  UIProjectSettingsFormData } from './data';
+import type { UIAttemptItem, UIProjectIssue, UIProjectMetrics, UIMetricDetail,
+  UIProjectMetricsDetail, UIProjectSettingsFormData } from './data';
 import { asSettings } from './ProjectSettingsPage';
 import { Notice } from './components/Notice';
 import { Screen } from './components/Screen';
@@ -35,6 +35,7 @@ interface IssueContextData {
 interface ProjectPageData {
   issues: UIProjectIssue[];
   metrics: UIProjectMetrics | null;
+  detail: UIProjectMetricsDetail | null;
 }
 
 /** Repli démonstration : le résolveur n'a rien renvoyé d'exploitable. */
@@ -79,7 +80,7 @@ const ProjectPageScreen = () => {
   useEffect(() => {
     invoke('getProjectPage')
       .then((payload) => setData(normalizeProjectPage(payload)))
-      .catch(() => setData({ issues: MOCK_PROJECT_ISSUES, metrics: MOCK_PROJECT_METRICS }));
+      .catch(() => setData({ issues: MOCK_PROJECT_ISSUES, metrics: MOCK_PROJECT_METRICS, detail: null }));
   }, []);
 
   if (!data) return <Loading />;
@@ -88,6 +89,7 @@ const ProjectPageScreen = () => {
       projectKey={projectKeyOf(context)}
       issues={data.issues}
       metrics={data.metrics ?? MOCK_PROJECT_METRICS}
+      metricsDetail={data.detail}
     />
   );
 };
@@ -160,11 +162,37 @@ function normalizeIssueContext(payload: unknown): IssueContextData {
   };
 }
 
+/** Un indicateur du résolveur, s'il est lisible ; sinon `null`. */
+function metricDetailOf(value: unknown): UIMetricDetail | null {
+  const record = asRecord(value);
+  const denominator = Number(record.denominator);
+  if (!Number.isFinite(denominator)) return null;
+  return { denominator, insufficientData: Boolean(record.insufficientData) };
+}
+
+/**
+ * Les trois dénominateurs, ou `null` si le résolveur ne les fournit pas :
+ * l'écran omet alors les légendes plutôt que d'en inventer.
+ */
+function normalizeMetricsDetail(value: unknown): UIProjectMetricsDetail | null {
+  const record = asRecord(value);
+  const confirmed = metricDetailOf(record.confirmedWithoutCorrection);
+  const clarifications = metricDetailOf(record.clarificationsAskedVsGuessed);
+  const repeated = metricDetailOf(record.repeatedAttemptsAvoided);
+  if (!confirmed || !clarifications || !repeated) return null;
+  return {
+    confirmedWithoutCorrection: confirmed,
+    clarificationsAskedVsGuessed: clarifications,
+    repeatedAttemptsAvoided: repeated,
+  };
+}
+
 function normalizeProjectPage(payload: unknown): ProjectPageData {
   const record = asRecord(payload);
   return {
     issues: Array.isArray(record.issues) ? (record.issues as UIProjectIssue[]) : MOCK_PROJECT_ISSUES,
     metrics: (record.metrics as UIProjectMetrics | null) ?? null,
+    detail: normalizeMetricsDetail(record.metricsDetail),
   };
 }
 
