@@ -9,6 +9,11 @@
  * portent une URL et un intitulé. Si le schéma serveur rejette la requête
  * (400/404), `collectNeighborChanges` bascule sur l'information de développement
  * Jira : aucune collecte ne dépend donc de la forme exacte de la réponse.
+ *
+ * Les états de pull requests (`MERGED`, `DECLINED`, `CLOSED`, `OPEN`,
+ * `DRAFT`…) sont normalisés en libellés français stables
+ * (`normalizeChangeState`) — y compris dans le repli — pour que le brief cite
+ * un état exploitable tel quel (ex. une PR « refusée »).
  */
 
 import {
@@ -27,6 +32,38 @@ import type {
 } from './types';
 
 export const NEIGHBOR_WINDOW_DAYS = 90;
+
+/**
+ * Vocabulaire d'état des pull requests, normalisé en libellés stables.
+ *
+ * Le Teamwork Graph et l'information de développement Jira nomment les états
+ * en majuscules anglaises (`MERGED`, `DECLINED`, `CLOSED`, `OPEN`, `DRAFT`) ;
+ * le brief, lui, parle français et doit pouvoir s'appuyer sur une PR
+ * « refusée » pour alimenter « Déjà tenté » (cahier des charges § 7.1 rang 5,
+ * validation § 15 c). Un seul tableau fait foi : le même état produit le même
+ * libellé, que la donnée vienne du graphe (`parseNeighborChanges`) ou du repli
+ * (`parseDevStatusChanges`) — aucune logique dupliquée.
+ */
+export const CHANGE_STATE_LABELS: Record<string, string> = {
+  merged: 'mergée',
+  declined: 'refusée',
+  closed: 'fermée sans merge',
+  open: 'ouverte',
+  draft: 'brouillon',
+  superseded: 'remplacée',
+  unknown: 'état inconnu',
+};
+
+/**
+ * Libellé stable d'un état de changement ; `undefined` si l'état est absent.
+ * Un état hors vocabulaire est conservé tel quel : on ne perd ni n'invente
+ * aucune information (ex. un état propriétaire renvoyé par un nouvel outil).
+ */
+export function normalizeChangeState(raw: string | undefined): string | undefined {
+  const trimmed = (raw ?? '').trim();
+  if (trimmed === '') return undefined;
+  return CHANGE_STATE_LABELS[trimmed.toLowerCase()] ?? trimmed;
+}
 
 /** Clés sous lesquelles `fetchDevStatus` range ses deux réponses (PR, dépôts). */
 const DEV_STATUS_BUCKETS = ['pullRequests', 'commits'] as const;
@@ -147,7 +184,7 @@ function toNeighborChange(entry: ChangeNode): NeighborChange {
       asString(dig(node, 'author', 'displayName')) ||
       asString(node.author) ||
       'inconnu',
-    state: asString(node.state) || asString(node.status) || undefined,
+    state: normalizeChangeState(asString(node.state) || asString(node.status)),
   };
 }
 
@@ -188,7 +225,7 @@ function devPullRequest(value: unknown): NeighborChange {
     url: asString(pr.url),
     date: parseIsoDate(pr.lastUpdate ?? pr.created),
     author: asString(dig(pr, 'author', 'name')) || 'inconnu',
-    state: asString(pr.status) || undefined,
+    state: normalizeChangeState(asString(pr.status)),
   };
 }
 

@@ -34,6 +34,7 @@ export const QUEUE_REASONS: readonly QueueReason[] = [
   'comment-added',
   'issue-link-created',
   'issue-link-deleted',
+  'scheduled-drain',
 ];
 
 /** Charge poussée sur la file platform : le strict nécessaire au consumer. */

@@ -69,7 +69,8 @@ export type QueueReason =
   | 'issue-updated'
   | 'comment-added'
   | 'issue-link-created'
-  | 'issue-link-deleted';
+  | 'issue-link-deleted'
+  | 'scheduled-drain';
 
 export interface QueueEntry {
   issueKey: string;
