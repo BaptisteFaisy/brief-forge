@@ -1,0 +1,11 @@
+# Provenance
+- Date : 2026-11-12 17:56:17 CET
+- Commande : `forge-atlassian deploy -e production --non-interactive --approve MAJOR_VERSION_RULE`
+- Dépôt : brief-forge @ 60892bd
+
+(extrait du déploiement — lignes de verdict uniquement)
+
+✔ Deployed
+Deployed Brief de contexte to the production environment with 1 approval acknowledged.
+We've detected new scopes or egress URLs in your app.
+ℹ The version of your app [3.0.0] that was just deployed to [production] is eligible for the Runs on Atlassian program.

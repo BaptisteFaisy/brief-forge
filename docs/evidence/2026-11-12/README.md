@@ -13,6 +13,7 @@ fichier est la trace d'une commande réellement exécutée.
 | [Langue du brief](langue-brief/) | Le brief suit la langue du ticket, et la fidélité tient toujours (0 inventé, 15/15 budgets) | `diff-ito.txt`, `fidelite-recapture.json` |
 | [Banc InferHub](banc-inferhub/) | Le même pipeline de condensation marche avec un fournisseur tiers, ~100× moins cher — mais trop lent pour la production | `sortie-banc.txt` |
 | [Démontage de la sonde](nettoyage-sonde/) | La sonde est hors service : jeton révoqué, webtrigger supprimé, URL en `404` | `sonde-404.txt`, `webtrigger-list.txt` |
+| [Déploiement staging + production](deploiement-production/) | `main` déployé sur les trois environnements, production installée sur le site de démo avec les scopes consentis | `deploy-*.txt`, `install-production.txt` |
 
 La mesure de fidélité sur 31 tickets réels (étape antérieure) reste dans
 [`live-fidelity-2026-11.json`](live-fidelity-2026-11.json) ; son analyse et ses
