@@ -1,0 +1,39 @@
+{
+ "provenance": {
+  "date": "2026-11-12 16:45:46 CET",
+  "origine": "sortie de la sonde `cmd=llm` (session du 12/11 au matin) — sonde démontée depuis, artefact non rejouable",
+  "source": "/tmp/llm-probe.json",
+  "note": "source hors dépôt, régénérée pendant la session"
+ },
+ "mesure": {
+  "cmd": "llm",
+  "budgetTokens": 60,
+  "listMs": 115,
+  "modelCount": 8,
+  "activeCount": 8,
+  "activeModels": [
+   "claude-haiku-4-5-20251001",
+   "claude-sonnet-4-5-20250929",
+   "claude-sonnet-4-6",
+   "claude-sonnet-5",
+   "claude-opus-4-6",
+   "claude-opus-4-7",
+   "claude-opus-4-8",
+   "claude-opus-5"
+  ],
+  "picked": "claude-haiku-4-5-20251001",
+  "fallbackModel": "claude-haiku-4-5",
+  "resolvedModel": "claude-haiku-4-5-20251001",
+  "resolveMs": 47,
+  "completeMs": 845,
+  "completeAnswer": "Le traitement des remboursements doit rester idempotent : deux appels successifs sur la même écriture ne produisent qu'un seul mouvement de journal, et chaque mouvement conserve la référence de la demande d'origine.",
+  "condenseMs": 861,
+  "inputChars": 2592,
+  "inputTokens": 648,
+  "outputChars": 215,
+  "outputTokens": 54,
+  "condensed": true,
+  "output": "Le traitement des remboursements doit rester idempotent : deux appels successifs sur la même écriture ne produisent qu'un seul mouvement de journal, et chaque mouvement conserve la référence de la demande d'origine.",
+  "ok": true
+ }
+}

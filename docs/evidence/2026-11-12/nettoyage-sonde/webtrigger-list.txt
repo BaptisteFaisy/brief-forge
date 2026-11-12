@@ -1,0 +1,9 @@
+# Provenance
+- Date : 2026-11-12 16:45:46 CET
+- Commande : `forge-atlassian webtrigger list -e development`
+- Dépôt : brief-forge-work @ a2047df
+Error: The manifest.yml file doesn't contain any web triggers. Add a web trigger before rerunning this command.
+
+Rerunning the command with --verbose may give more details.
+
+(ÉCHEC : la commande a rendu un code non nul — voir la sortie ci-dessus)

@@ -212,6 +212,12 @@ python3 scripts/live-fidelity.py captures-2/ > resultat-2.json
 
 ## Reproduire
 
+Les preuves de la session du 12 novembre 2026 — déploiements, logs du trigger
+planifié, découverte MCP, mesure du modèle hébergé, banc InferHub, démontage de la
+sonde — sont **versionnées** dans [`docs/evidence/2026-11-12/`](evidence/2026-11-12/),
+avec la convention et le garde-fou décrits dans
+[`docs/PREUVES.md`](PREUVES.md).
+
 ```bash
 # 1. Déployer la sonde (branche dev/sonde-live, jamais mergée dans main)
 git switch dev/sonde-live

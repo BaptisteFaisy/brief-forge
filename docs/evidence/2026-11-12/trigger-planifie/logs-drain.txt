@@ -1,0 +1,36 @@
+# Provenance
+- Date : 2026-11-12 16:45:46 CET
+- Commande : `forge-atlassian logs -e development -f brief-rebuild-sched-fn -s 8h -n 60`
+- Dépôt : brief-forge-work @ a2047df
+INFO    2026-11-12T10:49:32.813Z f128fbaf-b593-46ab-a38e-9c1484a08191 [brief-forge:events] Drain planifié : tickets périmés remis en file { stale: 0, enqueued: 0 }
+
+ERROR   2026-11-12T10:49:32.993Z f128fbaf-b593-46ab-a38e-9c1484a08191 APIError: Request principal is not authorized to use storage resource
+
+    at APIError.forErrorCode (webpack://brief-forge/Bureau/brief-forge-work/node_modules/@forge/storage/out/errors.js:35:1)
+
+    at assertNoErrors (webpack://brief-forge/Bureau/brief-forge-work/node_modules/@forge/storage/out/global-storage.js:9:1)
+
+    at getResponseBody (webpack://brief-forge/Bureau/brief-forge-work/node_modules/@forge/storage/out/global-storage.js:24:1)
+
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+    at async GlobalStorage.query (webpack://brief-forge/Bureau/brief-forge-work/node_modules/@forge/storage/out/global-storage.js:110:1)
+
+    at async <anonymous> (webpack://brief-forge/Bureau/brief-forge-work/node_modules/@forge/storage/out/global-storage.js:91:46)
+
+    at async GlobalStorage.wrapInMetric (webpack://brief-forge/Bureau/brief-forge-work/node_modules/@forge/storage/out/global-storage.js:130:1)
+
+    at async GlobalStorage.getInternal (webpack://brief-forge/Bureau/brief-forge-work/node_modules/@forge/storage/out/global-storage.js:91:46)
+
+    at async StorageBriefQueue.list (webpack://brief-forge/src/events/queue.ts:118:17)
+
+    at async consumeBriefQueue (webpack://brief-forge/src/events/consumer.ts:229:19)
+
+INFO    2026-11-12T11:49:32.126Z e60e0c51-7e2f-4dba-8208-14a19dd337ed [brief-forge:events] Drain planifié : aucun brief périmé, rien à reconstruire { stale: 0 }
+
+INFO    2026-11-12T12:49:32.444Z 087ce8d3-00b2-41d8-8254-36bd51861c3a [brief-forge:events] Drain planifié : aucun brief périmé, rien à reconstruire { stale: 0 }
+
+INFO    2026-11-12T13:49:32.580Z 772c88b5-988c-49e1-8214-a071bdb1ee78 [brief-forge:events] Drain planifié : aucun brief périmé, rien à reconstruire { stale: 0 }
+
+INFO    2026-11-12T14:49:32.716Z 795c78bc-c105-4b5d-98e4-f5f5215bad31 [brief-forge:events] Drain planifié : aucun brief périmé, rien à reconstruire { stale: 0 }
+

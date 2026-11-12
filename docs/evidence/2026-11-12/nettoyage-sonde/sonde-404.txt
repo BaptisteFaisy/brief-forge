@@ -1,0 +1,5 @@
+# Provenance
+- Date : 2026-11-12 16:45:46 CET
+- Origine : réponse HTTP de l'URL de la sonde après suppression du webtrigger (session du 12/11)
+- Source : `/tmp/probe-mort.txt` (hors dépôt, régénéré pendant la session)
+{"timestamp":"2026-11-12T12:49:54.834Z","path":"/x1/5dAdWgymwuOg7fW-1xvHahl-3d8","status":404,"error":"Not Found","requestId":"bab017c9-190147"}

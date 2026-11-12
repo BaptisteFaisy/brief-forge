@@ -1,0 +1,23 @@
+# Provenance
+- Date : 2026-11-12 16:45:46 CET
+- Commande : `node scripts/mcp-e2e.mjs --selftest`
+- Dépôt : brief-forge-work @ a2047df
+brief-forge — test de bout en bout du serveur MCP
+  · point d’accès : https://mcp.atlassian.com/forge/08a89a5d-94d0-448f-8c1a-70f938b2c3a8
+── Auto-contrôle hors ligne — lecture de manifest.yml
+  · 11 actions lues, 11 outils dans le module rovo:mcp
+    · get-work-brief (issueKey*:string, budget:string)
+    · check-readiness (issueKey*:string)
+    · get-acceptance-criteria (issueKey*:string)
+    · get-related-decisions (issueKey*:string)
+    · get-failed-attempts (issueKey*:string)
+    · get-neighbor-changes (issueKey*:string)
+    · list-ready-work (projectKey*:string)
+    · ask-clarification (issueKey*:string, question*:string)
+    · post-work-report (issueKey*:string, status*:string, report*:string, criteriaCovered:string, testsPassed:string)
+    · record-failed-attempt (issueKey*:string, summary*:string, reason*:string)
+    · claim-work (issueKey*:string, agentName*:string)
+── Auto-contrôle du comparateur
+  ✓ liste fidèle au manifeste : aucun écart signalé.
+  ✓ liste abîmée : 2 écart(s) détecté(s), comme attendu.
+  ✓ 11 outils exposés, comme le contrat l’exige.

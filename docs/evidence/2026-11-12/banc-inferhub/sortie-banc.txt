@@ -1,0 +1,61 @@
+# Provenance
+- Date : 2026-11-12 16:45:46 CET
+- Origine : sortie du banc InferHub (session du 12/11) — le jeton n'est pas dans l'environnement, la capture n'est donc pas rejouable ici
+- Source : `/tmp/banc5.log` (hors dépôt, régénéré pendant la session)
+npm notice run brief-forge@0.1.0 npx
+npm notice run 'jest' test/llm/banc-inferhub.test.ts --maxWorkers=1 --silent=false
+  console.log
+    [BANC] modèle=mm/MiniMax-M3.1-Flash appels=1 latence=4468 ms
+    [BANC] entrée=1474 car. (~369 jetons) → sortie=551 car. (~138 jetons)
+    [BANC] jetons facturés : 814 en entrée, 120 en sortie
+    [BANC] rendu :
+    Évaluation préliminaire de la migration du CRM Oracle vers SFDC et de l’impact du passage à un fournisseur SaaS.
+    Erreur 404 sur Workday lors de la saisie des temps après connexion.
+    Mises à jour et authentication de l’application mobile, avec tableau de bord pour responsables de crédit.
+    Ajout du crédit instantané SEPA.
+    Mise à niveau du fournisseur crypto, propagation des identifiants de traçage, clés d’idempotence pour remboursements, réglage du budget de tentatives, tuiles du tableau de bord de règlement, indicateurs contractuels PSP et refactor
+      at Object.log (test/llm/banc-inferhub.test.ts:159:13)
+  console.warn
+    [llm] condensation ignorée : délai dépassé après 45000 ms
+      115 |         return text === '' ? null : text;
+      116 |       } catch (error) {
+    > 117 |         console.warn(`[llm] condensation ignorée : ${describeLlmError(error)}`);
+          |                 ^
+      118 |         return null;
+      119 |       }
+      120 |     },
+      at Object.warn [as complete] (src/llm/client.ts:117:17)
+      at src/llm/condense.ts:97:20
+      at Object.<anonymous> (test/llm/banc-inferhub.test.ts:189:19)
+  console.log
+    [BANC] budget 300 → 194 jetons ; budget 80 → 369 jetons
+    [BANC] cumul : 2 appels, 7710 ms, 1628+420 jetons
+      at Object.log (test/llm/banc-inferhub.test.ts:193:13)
+  console.log
+    [BANC] au moins un appel n’a pas abouti (latence de la route) : comparaison non applicable.
+      at Object.log (test/llm/banc-inferhub.test.ts:204:15)
+  console.warn
+    [llm] condensation ignorée : InferHub 503 : fournisseur indisponible
+      115 |         return text === '' ? null : text;
+      116 |       } catch (error) {
+    > 117 |         console.warn(`[llm] condensation ignorée : ${describeLlmError(error)}`);
+          |                 ^
+      118 |         return null;
+      119 |       }
+      120 |     },
+      at Object.warn [as complete] (src/llm/client.ts:117:17)
+      at src/llm/condense.ts:97:20
+      at Object.<anonymous> (test/llm/banc-inferhub.test.ts:217:5)
+PASS test/llm/banc-inferhub.test.ts (54.341 s)
+  banc InferHub : condensation réelle, hors app Forge
+    ✓ condense réellement un texte long, dans le budget demandé (4639 ms)
+    ✓ un budget plus serré produit un texte plus court (48300 ms)
+    ✓ panne du fournisseur : le texte d’origine est rendu, rien ne remonte (12 ms)
+    ✓ réponse hors sujet : l’élément est jeté, jamais repêché (12 ms)
+Test Suites: 1 passed, 1 total
+Tests:       4 passed, 4 total
+Snapshots:   0 total
+Time:        54.994 s, estimated 65 s
+Ran all test suites matching /test\/llm\/banc-inferhub.test.ts/i.
+Jest did not exit one second after the test run has completed.
+'This usually means that there are asynchronous operations that weren't stopped in your tests. Consider running Jest with `--detectOpenHandles` to troubleshoot this issue.

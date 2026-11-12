@@ -1,0 +1,382 @@
+{
+ "provenance": {
+  "date": "2026-11-12 16:45:46 CET",
+  "origine": "sortie de `scripts/live-fidelity.py` sur les 5 tickets re-capturés (session du 12/11)",
+  "source": "/tmp/fid2.json",
+  "note": "source hors dépôt, régénérée pendant la session"
+ },
+ "mesure": {
+  "total": {
+   "tickets": 5,
+   "briefs": 15,
+   "elements": 54,
+   "sansSource": 0,
+   "intracables": 0,
+   "budgetTenu": 15,
+   "budgetDepasse": 0,
+   "troncatures": 0,
+   "troncatureNommee": 15,
+   "fuiteInstruction": 0,
+   "fuiteSecret": 0,
+   "ecartSignale": 3,
+   "preparationCoherente": 5,
+   "ticketsAvecErreursCollecte": 5,
+   "ms_s": {
+    "min": 1120,
+    "mediane": 1227,
+    "p95": 1399,
+    "max": 1409
+   },
+   "ms_m": {
+    "min": 1050,
+    "mediane": 1134,
+    "p95": 1421,
+    "max": 1471
+   },
+   "ms_l": {
+    "min": 1087,
+    "mediane": 1146,
+    "p95": 1308,
+    "max": 1388
+   }
+  },
+  "exemplesIntracables": [],
+  "parTicket": [
+   {
+    "issueKey": "ITO-1",
+    "acteur": "app",
+    "commentaires": 0,
+    "decisions": 0,
+    "voisins": 0,
+    "erreursCollecte": [
+     "voisins : Accès refusé au ticket 10142 pour l'utilisateur appelant."
+    ],
+    "briefs": {
+     "s": {
+      "jetons": 506,
+      "cible": 1000,
+      "budgetTenu": true,
+      "elements": 3,
+      "sansSource": 0,
+      "intracables": [],
+      "troncatures": [],
+      "troncatureNommee": true,
+      "trous": 7,
+      "fuiteInstruction": [],
+      "fuiteSecret": [],
+      "secretBrutPresent": [],
+      "ecartSignale": false,
+      "ms": 1227
+     },
+     "m": {
+      "jetons": 506,
+      "cible": 3000,
+      "budgetTenu": true,
+      "elements": 3,
+      "sansSource": 0,
+      "intracables": [],
+      "troncatures": [],
+      "troncatureNommee": true,
+      "trous": 7,
+      "fuiteInstruction": [],
+      "fuiteSecret": [],
+      "secretBrutPresent": [],
+      "ecartSignale": false,
+      "ms": 1134
+     },
+     "l": {
+      "jetons": 506,
+      "cible": 8000,
+      "budgetTenu": true,
+      "elements": 3,
+      "sansSource": 0,
+      "intracables": [],
+      "troncatures": [],
+      "troncatureNommee": true,
+      "trous": 7,
+      "fuiteInstruction": [],
+      "fuiteSecret": [],
+      "secretBrutPresent": [],
+      "ecartSignale": false,
+      "ms": 1146
+     }
+    },
+    "preparation": {
+     "score": 60,
+     "statut": "à préciser",
+     "manques": 2,
+     "pointsPerdus": 40,
+     "coherent": true
+    }
+   },
+   {
+    "issueKey": "ITO-2",
+    "acteur": "app",
+    "commentaires": 2,
+    "decisions": 0,
+    "voisins": 0,
+    "erreursCollecte": [
+     "voisins : Accès refusé au ticket 10143 pour l'utilisateur appelant."
+    ],
+    "briefs": {
+     "s": {
+      "jetons": 478,
+      "cible": 1000,
+      "budgetTenu": true,
+      "elements": 3,
+      "sansSource": 0,
+      "intracables": [],
+      "troncatures": [],
+      "troncatureNommee": true,
+      "trous": 7,
+      "fuiteInstruction": [],
+      "fuiteSecret": [],
+      "secretBrutPresent": [],
+      "ecartSignale": false,
+      "ms": 1399
+     },
+     "m": {
+      "jetons": 478,
+      "cible": 3000,
+      "budgetTenu": true,
+      "elements": 3,
+      "sansSource": 0,
+      "intracables": [],
+      "troncatures": [],
+      "troncatureNommee": true,
+      "trous": 7,
+      "fuiteInstruction": [],
+      "fuiteSecret": [],
+      "secretBrutPresent": [],
+      "ecartSignale": false,
+      "ms": 1421
+     },
+     "l": {
+      "jetons": 478,
+      "cible": 8000,
+      "budgetTenu": true,
+      "elements": 3,
+      "sansSource": 0,
+      "intracables": [],
+      "troncatures": [],
+      "troncatureNommee": true,
+      "trous": 7,
+      "fuiteInstruction": [],
+      "fuiteSecret": [],
+      "secretBrutPresent": [],
+      "ecartSignale": false,
+      "ms": 1308
+     }
+    },
+    "preparation": {
+     "score": 60,
+     "statut": "à préciser",
+     "manques": 2,
+     "pointsPerdus": 40,
+     "coherent": true
+    }
+   },
+   {
+    "issueKey": "MOBL-2",
+    "acteur": "app",
+    "commentaires": 1,
+    "decisions": 0,
+    "voisins": 0,
+    "erreursCollecte": [
+     "voisins : Accès refusé au ticket 10023 pour l'utilisateur appelant."
+    ],
+    "briefs": {
+     "s": {
+      "jetons": 506,
+      "cible": 1000,
+      "budgetTenu": true,
+      "elements": 4,
+      "sansSource": 0,
+      "intracables": [],
+      "troncatures": [],
+      "troncatureNommee": true,
+      "trous": 7,
+      "fuiteInstruction": [],
+      "fuiteSecret": [],
+      "secretBrutPresent": [],
+      "ecartSignale": false,
+      "ms": 1409
+     },
+     "m": {
+      "jetons": 506,
+      "cible": 3000,
+      "budgetTenu": true,
+      "elements": 4,
+      "sansSource": 0,
+      "intracables": [],
+      "troncatures": [],
+      "troncatureNommee": true,
+      "trous": 7,
+      "fuiteInstruction": [],
+      "fuiteSecret": [],
+      "secretBrutPresent": [],
+      "ecartSignale": false,
+      "ms": 1471
+     },
+     "l": {
+      "jetons": 506,
+      "cible": 8000,
+      "budgetTenu": true,
+      "elements": 4,
+      "sansSource": 0,
+      "intracables": [],
+      "troncatures": [],
+      "troncatureNommee": true,
+      "trous": 7,
+      "fuiteInstruction": [],
+      "fuiteSecret": [],
+      "secretBrutPresent": [],
+      "ecartSignale": false,
+      "ms": 1388
+     }
+    },
+    "preparation": {
+     "score": 30,
+     "statut": "non prêt",
+     "manques": 4,
+     "pointsPerdus": 70,
+     "coherent": true
+    }
+   },
+   {
+    "issueKey": "PAY-17",
+    "acteur": "app",
+    "commentaires": 0,
+    "decisions": 0,
+    "voisins": 0,
+    "erreursCollecte": [
+     "voisins : Accès refusé au ticket 66417 pour l'utilisateur appelant."
+    ],
+    "briefs": {
+     "s": {
+      "jetons": 543,
+      "cible": 1000,
+      "budgetTenu": true,
+      "elements": 3,
+      "sansSource": 0,
+      "intracables": [],
+      "troncatures": [],
+      "troncatureNommee": true,
+      "trous": 7,
+      "fuiteInstruction": [],
+      "fuiteSecret": [],
+      "secretBrutPresent": [],
+      "ecartSignale": false,
+      "ms": 1120
+     },
+     "m": {
+      "jetons": 543,
+      "cible": 3000,
+      "budgetTenu": true,
+      "elements": 3,
+      "sansSource": 0,
+      "intracables": [],
+      "troncatures": [],
+      "troncatureNommee": true,
+      "trous": 7,
+      "fuiteInstruction": [],
+      "fuiteSecret": [],
+      "secretBrutPresent": [],
+      "ecartSignale": false,
+      "ms": 1050
+     },
+     "l": {
+      "jetons": 543,
+      "cible": 8000,
+      "budgetTenu": true,
+      "elements": 3,
+      "sansSource": 0,
+      "intracables": [],
+      "troncatures": [],
+      "troncatureNommee": true,
+      "trous": 7,
+      "fuiteInstruction": [],
+      "fuiteSecret": [],
+      "secretBrutPresent": [],
+      "ecartSignale": false,
+      "ms": 1087
+     }
+    },
+    "preparation": {
+     "score": 60,
+     "statut": "à préciser",
+     "manques": 2,
+     "pointsPerdus": 40,
+     "coherent": true
+    }
+   },
+   {
+    "issueKey": "PAY-6",
+    "acteur": "app",
+    "commentaires": 7,
+    "decisions": 2,
+    "voisins": 0,
+    "erreursCollecte": [
+     "voisins : Accès refusé au ticket 66405 pour l'utilisateur appelant."
+    ],
+    "briefs": {
+     "s": {
+      "jetons": 653,
+      "cible": 1000,
+      "budgetTenu": true,
+      "elements": 5,
+      "sansSource": 0,
+      "intracables": [],
+      "troncatures": [],
+      "troncatureNommee": true,
+      "trous": 7,
+      "fuiteInstruction": [],
+      "fuiteSecret": [],
+      "secretBrutPresent": [],
+      "ecartSignale": true,
+      "ms": 1215
+     },
+     "m": {
+      "jetons": 653,
+      "cible": 3000,
+      "budgetTenu": true,
+      "elements": 5,
+      "sansSource": 0,
+      "intracables": [],
+      "troncatures": [],
+      "troncatureNommee": true,
+      "trous": 7,
+      "fuiteInstruction": [],
+      "fuiteSecret": [],
+      "secretBrutPresent": [],
+      "ecartSignale": true,
+      "ms": 1076
+     },
+     "l": {
+      "jetons": 653,
+      "cible": 8000,
+      "budgetTenu": true,
+      "elements": 5,
+      "sansSource": 0,
+      "intracables": [],
+      "troncatures": [],
+      "troncatureNommee": true,
+      "trous": 7,
+      "fuiteInstruction": [],
+      "fuiteSecret": [],
+      "secretBrutPresent": [],
+      "ecartSignale": true,
+      "ms": 1128
+     }
+    },
+    "preparation": {
+     "score": 39,
+     "statut": "non prêt",
+     "manques": 4,
+     "pointsPerdus": 61,
+     "coherent": true
+    }
+   }
+  ]
+ }
+}
