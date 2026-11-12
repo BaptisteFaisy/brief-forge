@@ -9,6 +9,7 @@ fichier est la trace d'une commande réellement exécutée.
 | [Déploiements](deploiements/) | `main` est déployé sur `development` (v5.5.0), éligible *Runs on Atlassian* ; la condensation LLM est allumée **sur `development` seulement** | `environnements.txt`, `eligibilite.txt`, `porte-llm.txt` |
 | [Trigger planifié](trigger-planifie/) | Le bug d'authentification GlobalStorage **et** sa correction, dans le même fichier : une exécution en erreur puis quatre propres | `logs-drain.txt` |
 | [Serveur MCP](mcp-e2e/) | Le serveur MCP répond sur le vrai point d'entrée Atlassian ; les 11 outils sont conformes au manifeste | `decouverte-mcp.txt`, `selftest-outils.txt` |
+| [Chemin `asUser`](mcp-asuser/) | Le chemin utilisateur a été poussé jusqu'au bout avec ton navigateur : il est **bloqué par l'état du tenant** (app « Not sharing »), pas par l'automatisation | `consentement-oauth.txt`, `admin-site.txt`, `console-developpeur.txt` |
 | [Modèle hébergé Forge](llm-forge/) | `@forge/llm` répond **dans le runtime Forge** : 8 modèles, `claude-haiku-4-5` choisi, 648 → 54 jetons en 861 ms | `probe-llm.json` |
 | [Langue du brief](langue-brief/) | Le brief suit la langue du ticket, et la fidélité tient toujours (0 inventé, 15/15 budgets) | `diff-ito.txt`, `fidelite-recapture.json` |
 | [Banc InferHub](banc-inferhub/) | Le même pipeline de condensation marche avec un fournisseur tiers, ~100× moins cher — mais trop lent pour la production | `sortie-banc.txt` |
