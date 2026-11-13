@@ -78,8 +78,23 @@ jobs:
       # `actions/setup-node`, qui téléchargerait la toolchain à chaque run et
       # ferait dépasser le budget de 5 minutes. Le cache npm de la machine est
       # réutilisé (`--prefer-offline`).
+      #
+      # Le PATH du service runner ne contient pas `~/.local/bin` (le `node`
+      # du poste y est installé) : sans ce réglage, `node --version` échoue
+      # en « command not found » et le job rouge en quelques secondes. Le même
+      # piège a fait échouer la CI d'un autre dépôt le 12/11.
       - name: Node (version du runner)
-        run: node --version
+        run: |
+          for d in "$HOME/.local/bin" "$HOME/.local/node22/bin" /usr/local/bin /usr/bin; do
+            if [ -x "$d/node" ]; then
+              echo "$d" >> "$GITHUB_PATH"
+              export PATH="$d:$PATH"
+              echo "node trouvé dans $d"
+              break
+            fi
+          done
+          node --version
+          npm --version
 
       - name: Installation des dépendances
         run: npm ci --prefer-offline --no-audit --no-fund
