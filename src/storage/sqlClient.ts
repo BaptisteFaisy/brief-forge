@@ -11,7 +11,19 @@
  * L'import de `@forge/sql` est **paresseux** : aucun module n'est chargé tant
  * qu'un client réel n'est pas demandé, donc `jest` peut importer `src/storage`
  * hors runtime Forge.
+ *
+ * **Le schéma est créé au premier usage.** Les tables sont créées par le DDL
+ * idempotent de `src/storage/schema.ts`, appelé ici une seule fois par
+ * instance, avant la première requête. Constaté sur un déploiement réel : le
+ * schéma n'était créé par personne (la sonde de développement le faisait, et
+ * elle n'est jamais mergée) ; en plus, désinstaller l'app efface les données
+ * de l'app, donc les tables partent avec. Résultat : chaque requête échouait
+ * sur « Unknown SQL execution error ». Le DDL étant idempotent
+ * (`CREATE TABLE IF NOT EXISTS`), le créer à la demande est sûr et ne coûte
+ * qu'une fois par conteneur.
  */
+
+import { SCHEMA_STATEMENTS } from './ddl';
 
 /** Paramètre lié à une requête (jamais interpolé dans le SQL). */
 export type SqlParam = string | number | boolean | null;
@@ -76,6 +88,48 @@ export function createForgeSqlClient(forgeSql: ForgeSqlApi): SqlClient {
   };
 }
 
+/**
+ * Client qui garantit l'existence des tables avant la première requête.
+ *
+ * Le DDL est idempotent, donc le créer à la demande est sans risque ; la
+ * promesse est mémorisée pour qu'une instance ne le fasse qu'une fois. En cas
+ * d'échec, la mémorisation est **annulée** : l'erreur remonte à l'appelant,
+ * et l'instance suivante réessaiera (une table manquante n'est pas un échec
+ * définitif).
+ */
+export function createSchemaEnsuringClient(inner: SqlClient): SqlClient {
+  let pending: Promise<void> | null = null;
+
+  const ensure = (): Promise<void> => {
+    if (!pending) {
+      pending = (async () => {
+        for (const statement of SCHEMA_STATEMENTS) {
+          await inner.executeDdl(statement.trim());
+        }
+      })().catch((error) => {
+        pending = null;
+        throw error;
+      });
+    }
+    return pending;
+  };
+
+  return {
+    async query<Row>(sql: string, params: SqlParam[] = []): Promise<Row[]> {
+      await ensure();
+      return inner.query<Row>(sql, params);
+    },
+    async execute(sql: string, params: SqlParam[] = []): Promise<void> {
+      await ensure();
+      return inner.execute(sql, params);
+    },
+    async executeDdl(sql: string): Promise<void> {
+      await ensure();
+      return inner.executeDdl(sql);
+    },
+  };
+}
+
 /** Charge `@forge/sql` seulement au premier usage réel. */
 function loadForgeSql(): ForgeSqlApi {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -101,7 +155,7 @@ export function resetSqlClient(): void {
 export function getSqlClient(): SqlClient {
   if (injected) return injected;
   if (!forgeClient) {
-    forgeClient = createForgeSqlClient(loadForgeSql());
+    forgeClient = createSchemaEnsuringClient(createForgeSqlClient(loadForgeSql()));
   }
   return forgeClient;
 }
