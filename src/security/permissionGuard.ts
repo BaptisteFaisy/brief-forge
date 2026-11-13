@@ -79,9 +79,27 @@ export function isSafeIssueKey(issueKey: string): boolean {
  * Lit le ticket au nom de l'utilisateur appelant.
  * Ne renvoie que le code de statut : aucun contenu du ticket n'est conservé.
  */
+/**
+ * Lit le ticket au nom de l'utilisateur appelant.
+ *
+ * `api.asUser()` **sans argument** : la requête part avec le jeton de
+ * l'appelant. En MCP externe, le contexte de l'appel est déjà un contexte
+ * utilisateur (`principal.accountId`), et c'est ce jeton-là qu'on veut.
+ *
+ * `api.asUser(accountId)` serait autre chose : de l'**impersonation hors
+ * ligne** (vouloir le droit de *telle* personne depuis un trigger ou un
+ * webtrigger). La plateforme la refuse sans scope `allowImpersonation`
+ * (`NO_IMPERSONATION_SCOPES_DEFINED`) — et surtout, elle ne sert à rien
+ * ici : on ne cherche pas les droits d'un tiers, on ne doit jamais dépasser
+ * ceux de l'appelant. Conséquence utile : hors contexte utilisateur (web
+ * trigger, trigger planifié), l'appel part sans jeton, Jira répond 401, et le
+ * garde refuse — fail-safe, exactement comme avant.
+ *
+ * Ne renvoie que le code de statut : aucun contenu du ticket n'est conservé.
+ */
 async function fetchIssueAsUser(issueKey: string, accountId: string): Promise<AccessProbe> {
   const response = await api
-    .asUser(accountId)
+    .asUser()
     .requestJira(route`/rest/api/3/issue/${issueKey}?fields=summary`);
   return { ok: response.ok === true, status: response.status };
 }

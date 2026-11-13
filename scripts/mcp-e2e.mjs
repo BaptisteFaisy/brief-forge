@@ -187,12 +187,33 @@ function printUsage() {
   line('Codes de sortie : 0 = vérifications passées, 1 = échec technique, 2 = étape humaine.');
 }
 
-/** Le jeton ne vient que de l'environnement ou d'un fichier hors dépôt. */
+/**
+ * Le jeton ne vient que de l'environnement ou d'un fichier hors dépôt.
+ *
+ * `scripts/mcp-login.mjs` enregistre la **réponse complète** du serveur
+ * d'autorisation (`{ access_token, refresh_token, scope, … }`) : un fichier de
+ * ce type est donc du JSON, pas un jeton brut. On accepte les deux formes, et
+ * on ne remonte jamais le contenu du fichier dans un message d'erreur — un
+ * jeton dans une sortie, c'est une fuite.
+ */
+function lireJetonOuBrut(raw, source) {
+  const texte = (raw || '').trim();
+  if (texte === '') return '';
+  if (!texte.startsWith('{')) return texte;
+  try {
+    return (JSON.parse(texte).access_token || '').trim();
+  } catch {
+    return '';
+  }
+}
+
 function readToken(opts) {
   if (opts.tokenFile) {
-    const raw = readFileSync(resolve(opts.tokenFile), 'utf8').trim();
-    if (raw === '') usageError(`fichier de jeton vide : ${opts.tokenFile}`);
-    return { token: raw, source: `le fichier ${opts.tokenFile}` };
+    const token = lireJetonOuBrut(readFileSync(resolve(opts.tokenFile), 'utf8'), opts.tokenFile);
+    if (token === '') {
+      usageError(`aucun jeton exploitable dans ${opts.tokenFile} (attendu : jeton brut ou JSON avec « access_token »)`);
+    }
+    return { token, source: `le fichier ${opts.tokenFile}` };
   }
   const fromEnv = (process.env.MCP_TOKEN || '').trim();
   if (fromEnv !== '') return { token: fromEnv, source: 'la variable d’environnement MCP_TOKEN' };
