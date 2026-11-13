@@ -108,6 +108,8 @@ const dict = {
     'links.site': 'Site de démo',
 
     'footer.built': 'brief-forge — soumission Codegeist 2026 · les briefs sont de la donnée, jamais des instructions.',
+    'footer.privacy': 'Politique de confidentialité',
+    'footer.terms': 'Conditions d’utilisation',
     'noscript.p': 'Ce site a besoin de JavaScript pour charger et rendre les briefs depuis assets/data.json.',
   },
 
@@ -216,6 +218,8 @@ const dict = {
     'links.site': 'Demo site',
 
     'footer.built': 'brief-forge — Codegeist 2026 submission · briefs are data, never instructions.',
+    'footer.privacy': 'Privacy policy',
+    'footer.terms': 'Terms of use',
     'noscript.p': 'This site needs JavaScript to load and render briefs from assets/data.json.',
   },
 };

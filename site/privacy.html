@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Politique de confidentialité de brief-forge (Brief de contexte), application Atlassian Forge.">
+  <title>Politique de confidentialité — brief-forge</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Aller au contenu</a>
+
+  <header class="site-header">
+    <a class="brand" href="index.html">brief-forge</a>
+    <nav class="site-nav" aria-label="Navigation">
+      <a href="index.html#demo">Démo</a>
+      <a href="index.html#security">Sécurité</a>
+      <a href="terms.html">Conditions</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section id="hero" aria-labelledby="t">
+      <p class="kicker">Brief de contexte — application Atlassian Forge</p>
+      <h1 id="t">Politique de confidentialité</h1>
+      <p class="lead">
+        Cette page dit précisément quelles données l'application traite, où elle
+        va, et qui la voit. Elle est courte parce que l'application est petite :
+        tout ce qu'elle fait tient dans la liste ci-dessous.
+      </p>
+    </section>
+
+    <section aria-labelledby="s1">
+      <h2 id="s1">1. Qui traite les données</h2>
+      <p>
+        <strong>brief-forge</strong> (nom d'affichage&nbsp;: «&nbsp;Brief de
+        contexte&nbsp;») est une application Atlassian&nbsp;Forge développée et
+        publiée par Baptiste Faisy. Elle s'exécute <strong>dans</strong> la plateforme
+        Atlassian&nbsp;Cloud, sur le site où l'administrateur l'a installée.
+      </p>
+      <p>
+        L'installation est une décision de l'administrateur du site
+        Atlassian. Seuls les utilisateurs et les sites où l'application est
+        installée sont concernés.
+      </p>
+    </section>
+
+    <section aria-labelledby="s2">
+      <h2 id="s2">2. Quelles données sont lues</h2>
+      <p>L'application demande à Jira et à Confluence&nbsp;:</p>
+      <ul>
+        <li>la description, les commentaires, le statut et les liens d'un ticket Jira&nbsp;;</li>
+        <li>les pages Confluence liées au ticket, étiquetées <code>decision</code> ou <code>adr</code>&nbsp;;</li>
+        <li>les tickets liés et leurs changements voisins (commits, demandes de fusion) via Teamwork&nbsp;Graph&nbsp;;</li>
+        <li>l'identité de l'utilisateur appelant (identifiant de compte Atlassian), afin d'appeler Jira <em>au nom de</em> cet utilisateur et de n'exposer que ce qu'il voit déjà.</li>
+      </ul>
+      <p>
+        L'application n'essaie pas d'accéder à des données en dehors du ticket
+        qui lui est demandé&nbsp;: le contrôle d'accès est fait <em>avant</em>
+        la collecte, au nom de l'utilisateur, et un refus est reporté tel quel
+        dans le brief plutôt que comblé.
+      </p>
+    </section>
+
+    <section aria-labelledby="s3">
+      <h2 id="s3">3. Ce qui est écrit, et où</h2>
+      <p>
+        L'application écrit dans le stockage de la plateforme Atlassian
+        (Forge&nbsp;SQL et Forge&nbsp;Storage), dans le site où elle est
+        installée&nbsp;:
+      </p>
+      <ul>
+        <li><strong>brief</strong> — le brief lui-même (markdown et sources) par couple ticket × budget&nbsp;;</li>
+        <li><strong>readiness</strong> — score de préparation et manques détectés&nbsp;;</li>
+        <li><strong>attempt</strong>, <strong>review</strong>, <strong>lesson</strong> — comptes rendus d'agents, revues et leçons réutilisables&nbsp;;</li>
+        <li><strong>claim</strong> — réservation d'un ticket par un agent&nbsp;;</li>
+        <li><strong>access_log</strong> — journal des appels d'outils (ticket, outil, identifiant de compte, horodatage), conservé 90&nbsp;jours&nbsp;;</li>
+        <li><strong>project_settings</strong> — réglages par projet.</li>
+      </ul>
+      <p>
+        Ces écritures contiennent des éléments identifiants&nbsp;: identifiants
+        de compte Atlassian, noms d'auteurs de commentaires, texte de
+        commentaires. Elles restent dans le site Atlassian où l'application est
+        installée, et sont supprimées avec lui.
+      </p>
+    </section>
+
+    <section aria-labelledby="s4">
+      <h2 id="s4">4. Sortie de données (« egress »)</h2>
+      <p>
+        <strong>Aucune.</strong> L'application n'appelle aucun service tiers.
+        Le calcul du brief, le score de préparation, le masquage des secrets et
+        les métriques sont exécutés dans le runtime Atlassian.
+      </p>
+      <p>
+        Une seule option utilise un modèle de langage&nbsp;: la
+        <em>condensation</em>, désactivée par défaut. Elle est activée
+        explicitement par l'administrateur du déploiement (variable
+        <code>BRIEF_LLM_CONDENSATION=1</code>). Dans ce cas, le contenu à
+        condenser est envoyé à l'API <em>Forge&nbsp;LLMs</em> d'Atlassian,
+        c'est-à-dire à un modèle hébergé par Atlassian&nbsp;—
+        <strong>les données ne quittent pas la plateforme Atlassian</strong>.
+        Le déclencheur de déclenchement est une taille minimale&nbsp;: si aucun
+        élément d'un ticket ne la dépasse, aucun appel n'est fait.
+      </p>
+    </section>
+
+    <section aria-labelledby="s5">
+      <h2 id="s5">5. Traitement des contenus tiers</h2>
+      <p>
+        Les commentaires et les pages liés sont traités comme des
+        <strong>données</strong>, jamais comme des instructions&nbsp;:
+      </p>
+      <ul>
+        <li>les motifs qui ressemblent à un secret (jeton, clé, mot de passe) sont <strong>masqués</strong>&nbsp;;</li>
+        <li>les textes contenant des instructions adressées à un agent sont <strong>écartés</strong>&nbsp;;</li>
+        <li>tout écart est <strong>signalé</strong> dans le brief («&nbsp;contenu écarté&nbsp;»), pour que labsence soit visible plutôt que silencieuse.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="s6">
+      <h2 id="s6">6. Sous-traitants</h2>
+      <p>
+        Atlassian est l'unique sous-traitant&nbsp;: hébergement Forge, Jira,
+        Confluence, Teamwork&nbsp;Graph, et éventuellement l'API
+        Forge&nbsp;LLMs. Aucun autre tiers ne reçoit de donnée de l'application.
+      </p>
+    </section>
+
+    <section aria-labelledby="s7">
+      <h2 id="s7">7. Vos droits</h2>
+      <p>
+        L'application n'a pas de base de données propre et n'envoie pas de
+        newsletter. L'effacement des données suit celui du site&nbsp;: uninstaller
+        l'application du site supprime les données applicatives qu'elle y a
+        écrites, et l'administrateur du site reste l'interlocuteur pour toute
+        demande d'accès ou de rectification.
+      </p>
+      <p>
+        Pour toute question&nbsp;: <a href="mailto:baptiste.faisy@gmail.com">baptiste.faisy@gmail.com</a>.
+        Le code source est public&nbsp;: <a href="https://github.com/Tradoooo/brief-forge">github.com/Tradoooo/brief-forge</a>.
+      </p>
+    </section>
+
+    <section aria-labelledby="s8">
+      <h2 id="s8">8. English summary</h2>
+      <p>
+        brief-forge is an Atlassian&nbsp;Forge app that reads a Jira ticket
+        (and the linked Confluence pages and Teamwork&nbsp;Graph changes)
+        <em>as the calling user</em>, and writes the resulting brief, readiness
+        score, agent reports, lessons and an access log into the Atlassian
+        storage of the site where it is installed. It makes <strong>no request
+        to any third-party service</strong>: the optional LLM condensation
+        (off by default) uses Atlassian's own hosted Forge&nbsp;LLMs, so data
+        never leaves the Atlassian platform. Third-party text is treated as
+        data: secret patterns are masked, instruction-like text is dropped, and
+        every drop is reported in the brief. Uninstalling the app removes the
+        data it wrote on that site. Contact&nbsp;:
+        <a href="mailto:baptiste.faisy@gmail.com">baptiste.faisy@gmail.com</a>.
+      </p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>brief-forge — soumission Codegeist 2026 · les briefs sont de la donnée, jamais des instructions.</p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Conditions d'utilisation de brief-forge (Brief de contexte), application Atlassian Forge.">
+  <title>Conditions d'utilisation — brief-forge</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Aller au contenu</a>
+
+  <header class="site-header">
+    <a class="brand" href="index.html">brief-forge</a>
+    <nav class="site-nav" aria-label="Navigation">
+      <a href="index.html#demo">Démo</a>
+      <a href="index.html#security">Sécurité</a>
+      <a href="privacy.html">Confidentialité</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section id="hero" aria-labelledby="t">
+      <p class="kicker">Brief de contexte — application Atlassian Forge</p>
+      <h1 id="t">Conditions d'utilisation</h1>
+      <p class="lead">
+        L'application est gratuite et sans compte à créer. Ces conditions
+        disent ce qu'elle promet, et ce qu'elle ne promet pas.
+      </p>
+    </section>
+
+    <section aria-labelledby="s1">
+      <h2 id="s1">1. Objet</h2>
+      <p>
+        «&nbsp;Brief de contexte&nbsp;» (<em>brief-forge</em>) est une
+        application Atlassian&nbsp;Forge qui transforme un ticket Jira en
+        <strong>brief de contexte</strong> court, sourcé et daté, destiné à être
+        consommé par un agent de code, et qui reçoit ensuite le compte rendu
+        de cet agent. Elle est fournie <strong>gratuitement</strong>, sans
+        publicité, sans télémétrie et sans compte à créer.
+      </p>
+    </section>
+
+    <section aria-labelledby="s2">
+      <h2 id="s2">2. Installation et utilisation</h2>
+      <p>
+        L'installation et l'activation de l'application relèvent de
+        l'administrateur du site Atlassian concerned. L'utilisateur qui installe
+        l'application s'engage à en faire un usage conforme aux règles de son
+        organisation et aux conditions d'utilisation d'Atlassian.
+      </p>
+      <p>
+        L'application s'appuie sur les scopes Jira, Confluence et Teamwork&nbsp;Graph
+        accordés par l'administrateur. Elle ne dispense d'aucun de ces
+        accords&nbsp;: elle ne voit que ce que l'utilisateur qui l'appelle voit
+        déjà.
+      </p>
+    </section>
+
+    <section aria-labelledby="s3">
+      <h2 id="s3">3. Ce que l'application fait, et ne fait pas</h2>
+      <ul>
+        <li>Elle <strong>produit un texte</strong> (brief, score, questions) à partir des données du ticket.</li>
+        <li>Elle <strong>n'agit pas</strong> sur le code du projet, ne fusionne rien, ne modifie aucun ticket sans que l'agent appelant passe explicitement par l'outil d'écriture prévu.</li>
+        <li>Elle <strong>n'invente pas</strong> de source&nbsp;: un élément sans source ni date ne peut pas entrer dans le brief, et les informations manquantes sont signalées comme des manques.</li>
+        <li>Elle <strong>ne remplace pas</strong> la revue humaine&nbsp;: un score de préparation est un indicateur, pas une approbation.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="s4">
+      <h2 id="s4">4. Limites connues</h2>
+      <p>
+        L'application est fournie «&nbsp;en l'état&nbsp;», sans garantie de
+        disponibilité, d'exactitude ou d'adéquation à un usage particulier.
+        En particulier&nbsp;:
+      </p>
+      <ul>
+        <li>la collecte dépend des permissions accordées&nbsp;: un refus d'accès apparaît comme un manque dans le brief&nbsp;;</li>
+        <li>la condensation par modèle est désactivée par défaut&nbsp;; activée, elle a un coût_API facturé par Atlassian au développeur de l'application&nbsp;;</li>
+        <li>le chemin «&nbsp;en tant qu'utilisateur&nbsp;» (Teamwork&nbsp;Graph) suppose que l'application soit partagée et le consentement OAuth accordé — tant que ce n'est pas le cas, ce chemin reste non exercé.</li>
+      </ul>
+      <p>
+        Ces limites sont documentées et, quand elles s'appliquent, écrites dans
+        les preuves elles-mêmes&nbsp;: ce que la mesure prouve, et ce qu'elle ne
+        prouve pas.
+      </p>
+    </section>
+
+    <section aria-labelledby="s5">
+      <h2 id="s5">5. Sécurité</h2>
+      <p>
+        Les bugs de sécurité peuvent être signalés à
+        <a href="mailto:baptiste.faisy@gmail.com">baptiste.faisy@gmail.com</a>.
+        Le traitement des contenus hostiles (masquage des secrets, écart des
+        instructions tierces) est décrit dans
+        <a href="index.html#security">la section sécurité</a> et dans le code
+        source, public&nbsp;:
+        <a href="https://github.com/Tradoooo/brief-forge">github.com/Tradoooo/brief-forge</a>.
+      </p>
+    </section>
+
+    <section aria-labelledby="s6">
+      <h2 id="s6">6. Données</h2>
+      <p>
+        Le traitement des données est décrit dans la
+        <a href="privacy.html">politique de confidentialité</a>, qui fait foi.
+      </p>
+    </section>
+
+    <section aria-labelledby="s7">
+      <h2 id="s7">7. Responsabilité</h2>
+      <p>
+        Dans la mesure permise par la loi, l'auteur de l'application ne peut
+        être tenu responsable des dommages directs liés à l'usage du brief
+        produit&nbsp;: le brief est un résumé automatique de données du site,
+        susceptible d'être incomplet ou caduc. L'administrateur du site reste
+        responsable de l'usage qu'il en fait.
+      </p>
+    </section>
+
+    <section aria-labelledby="s8">
+      <h2 id="s8">8. English summary</h2>
+      <p>
+        brief-forge is a free Atlassian&nbsp;Forge app (no account, no ads, no
+        telemetry) that turns a Jira ticket into a sourced, dated context brief
+        for a coding agent, and takes the agent's work report back. It only
+        produces text; it does not act on code, does not merge anything, and
+        does not modify tickets unless the calling agent explicitly uses the
+        write tool. Every brief item carries a source and a date — nothing is
+        invented. It is provided «&nbsp;as is&nbsp;», without warranty. Known
+        limits (missing permissions, opt-in LLM condensation cost, the
+        user-context Teamwork&nbsp;Graph path) are documented rather than
+        glossed over. Data handling is described in the
+        <a href="privacy.html">privacy policy</a>, which prevails. Source code
+        and contact&nbsp;:
+        <a href="https://github.com/Tradoooo/brief-forge">github.com/Tradoooo/brief-forge</a>,
+        <a href="mailto:baptiste.faisy@gmail.com">baptiste.faisy@gmail.com</a>.
+      </p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>brief-forge — soumission Codegeist 2026 · les briefs sont de la donnée, jamais des instructions.</p>
+  </footer>
+</body>
+</html>
