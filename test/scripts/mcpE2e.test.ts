@@ -25,6 +25,13 @@ function run(args: string[], env: Record<string, string> = {}) {
   return { status: result.status ?? -1, out: `${result.stdout ?? ''}${result.stderr ?? ''}` };
 }
 
+/** Lance le harnais ESM du comparateur (Jest ne transforme pas les `.mjs`). */
+function runHarnais() {
+  const harnais = join('test', 'scripts', 'harnais-comparateur.mjs');
+  const result = spawnSync('node', [harnais], { cwd: ROOT, encoding: 'utf-8' });
+  return { status: result.status ?? -1, out: `${result.stdout ?? ''}${result.stderr ?? ''}` };
+}
+
 describe('scripts MCP E2E — intégrité', () => {
   test.each([SCRIPT, ...LIBS.map((lib) => join(LIB_DIR, lib))])(
     '%s a une syntaxe valide (node --check)',
@@ -105,5 +112,38 @@ describe('scripts MCP E2E — modes hors ligne', () => {
     const { status, out } = run(['--n-importe-quoi']);
     expect(status).toBe(1);
     expect(out).toContain('option inconnue');
+  });
+});
+
+/**
+ * Le comparateur d'outils doit distinguer « le même outil sur une autre
+ * installation » d'« un outil inconnu ».
+ *
+ * Constaté sur le site de démo le 13/11 : la même app étant installée en
+ * `development` et en `production`, `tools/list` renvoyait 22 outils — les
+ * 11 du manifeste, plus les 11 mêmes suffixés `_development`. Le comparateur
+ * les prenait pour 11 outils « absents du manifeste » : faux positif, verdict
+ * illisible.
+ *
+ * Jest ne transforme pas les `.mjs` (modules ESM) : les deux comportements
+ * sont donc vérifiés par le mode `--selftest` du script, qui échoue s'il
+ * se trompe, et par un harnais `.mjs` lancé par `node`.
+ */
+describe('comparateur d’outils — installations multiples', () => {
+  it('le mode --selftest valide les deux cas (installations et outil inconnu)', () => {
+    const { status, out } = run(['--selftest']);
+    expect(status).toBe(0);
+    expect(out).toContain('les outils suffixés par l’environnement ne sont pas des écarts');
+    expect(out).toContain('outil inconnu : l’écart est bien détecté');
+  });
+
+  it('cleOutil ramène un nom suffixé à sa clé de manifeste', () => {
+    const { status, out } = runHarnais();
+    expect(status).toBe(0);
+    expect(out).toContain('get-work-brief -> get-work-brief');
+    expect(out).toContain('get-work-brief_development -> get-work-brief');
+    expect(out).toContain('autre_chose -> null');
+    expect(out).toContain('installations: aucun écart');
+    expect(out).toContain('inconnu: écart détecté');
   });
 });

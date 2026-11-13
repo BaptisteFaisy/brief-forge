@@ -1,0 +1,36 @@
+# Provenance
+- Date : 2026-11-13 19:06:14 CET
+- Commande : `node scripts/mcp-e2e.mjs --check --token-file ~/.config/brief-forge/mcp.token`
+- Dépôt : brief-forge @ a7f5ee5
+
+brief-forge — test de bout en bout du serveur MCP
+  · point d’accès : https://mcp.atlassian.com/forge/08a89a5d-94d0-448f-8c1a-70f938b2c3a8
+  · jeton lu depuis le fichier /home/baptiste/.config/brief-forge/mcp.token (jamais affiché, jamais écrit)
+── Référence : manifeste
+  · 11 actions déclarées, 11 outils dans le module rovo:mcp
+  · serveur : integrations-service 1.0
+── Outils exposés par le serveur
+  ✓ get-work-brief
+  ✓ check-readiness
+  ✓ get-acceptance-criteria
+  ✓ get-related-decisions
+  ✓ get-failed-attempts
+  ✓ get-neighbor-changes
+  ✓ list-ready-work
+  ✓ ask-clarification
+  ✓ post-work-report
+  ✓ record-failed-attempt
+  ✓ claim-work
+  ✓ get-work-brief_development  (installation development)
+  ✓ check-readiness_development  (installation development)
+  ✓ get-acceptance-criteria_development  (installation development)
+  ✓ get-related-decisions_development  (installation development)
+  ✓ get-failed-attempts_development  (installation development)
+  ✓ get-neighbor-changes_development  (installation development)
+  ✓ list-ready-work_development  (installation development)
+  ✓ ask-clarification_development  (installation development)
+  ✓ post-work-report_development  (installation development)
+  ✓ record-failed-attempt_development  (installation development)
+  ✓ claim-work_development  (installation development)
+── Comparaison avec les 11 actions du manifeste
+  ✓ aucun écart : noms d’outils et schémas d’entrées correspondent au manifeste.

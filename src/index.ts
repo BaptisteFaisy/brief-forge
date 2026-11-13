@@ -13,7 +13,7 @@
 import Resolver from '@forge/resolver';
 
 import { getWorkBrief } from './actions/getWorkBrief';
-import { checkReadiness } from './actions/checkReadiness';
+import { checkReadiness, computeAndStore } from './actions/checkReadiness';
 import { getAcceptanceCriteria } from './actions/getAcceptanceCriteria';
 import { getRelatedDecisions } from './actions/getRelatedDecisions';
 import { getFailedAttempts } from './actions/getFailedAttempts';
@@ -33,6 +33,7 @@ import { defaultEventHandlers, runConsumerForEvent, runScheduledDrain } from './
 import { recordReview } from './review';
 import type { RecordReviewResult, ReviewVerdict } from './review';
 import { projectMetrics, toUiProjectMetrics } from './metrics';
+import type { ReadinessScore } from './types';
 
 // --------------------------------------------------------------------- actions
 export {
@@ -60,10 +61,21 @@ function projectKeyFromContext(context: any): string | undefined {
   return context?.extension?.project?.key;
 }
 
+/**
+ * Contexte de l'encart Jira : préparation, brief, tentatives.
+ *
+ * Le score est **calculé à la demande** quand il n'est pas encore stocké.
+ * Sans cela, l'encart affiche « Brief indisponible » sur tout ticket dont le
+ * score n'a jamais été calculé pour *cette* installation — et Forge SQL est
+ * cloisonné par installation : une app installée en Jira et en Confluence a
+ * deux bases distinctes, si bien que les outils MCP peuvent router vers une
+ * installation différente de celle qui rend l'encart. Un panneau incapable
+ * de calculer ce qu'il affiche n'est pas fiable ; celui-ci sait calculer.
+ */
 resolver.define('getIssueContext', async ({ context }: any) => {
   const issueKey = issueKeyFromContext(context);
   if (!issueKey) return { error: 'Clé de ticket absente du contexte.' };
-  const readiness = (await loadReadiness(issueKey)) ?? null;
+  const readiness = await readinessOuCalcul(issueKey);
   const brief = await loadBrief(issueKey, 'm');
   const attempts = await loadAttempts(issueKey);
   const reviews = attempts.length > 0 ? await loadReviews(attempts[0].id) : [];
@@ -76,6 +88,21 @@ resolver.define('getIssueContext', async ({ context }: any) => {
     lastReview: reviews.length > 0 ? reviews[reviews.length - 1] : null,
   };
 });
+
+/**
+ * Score stocké, sinon calculé à la demande (et mémorisé).
+ * Un calcul raté ne casse pas l'encart : il reste sans score.
+ */
+async function readinessOuCalcul(issueKey: string): Promise<ReadinessScore | null> {
+  const stored = await loadReadiness(issueKey);
+  if (stored) return stored;
+  try {
+    return await computeAndStore(issueKey);
+  } catch (error) {
+    console.warn(`[resolver:getIssueContext] score indisponible : ${String(error)}`);
+    return null;
+  }
+}
 
 resolver.define('getProjectSettings', async ({ context }: any) => {
   const projectKey = projectKeyFromContext(context);

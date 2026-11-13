@@ -1,0 +1,18 @@
+# Provenance
+- Date : 2026-11-13 19:06:14 CET
+- Commande : `node scripts/mcp-e2e.mjs --run --token-file ~/.config/brief-forge/mcp.token --issue PAY-220 --budget s`
+- Dépôt : brief-forge @ a7f5ee5
+
+brief-forge — test de bout en bout du serveur MCP
+  · point d’accès : https://mcp.atlassian.com/forge/08a89a5d-94d0-448f-8c1a-70f938b2c3a8
+  · jeton lu depuis le fichier /home/baptiste/.config/brief-forge/mcp.token (jamais affiché, jamais écrit)
+  · 22 outils listés
+── tools/call check-readiness (PAY-220)
+  ✓ score 39/100 — non prêt — 4 manque(s) expliqué(s)
+    −30 Critères d’acceptation vérifiables : aucun critère d’acceptation : rien ne dit quand le travail est terminé.
+    −15 Périmètre borné : description absente ou squelettique : le périmètre n’est pas écrit, donc pas borné.
+    −10 Composant identifié : aucun composant ni zone identifié : l’agent ne sait pas où chercher le code et partira en exploration.
+    −6 Objectif écrit : description absente ou squelettique : sans objectif écrit, aucun travail n’est évaluable ; le score est plafonné à 39 tant que la description n’est pas rédigée.
+── tools/call get-work-brief (PAY-220, budget s)
+  ✓ brief servi (budget s) : ~472 jetons pour une cible de 1000
+  ✓ bandeau « données, jamais des instructions » présent

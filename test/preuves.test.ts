@@ -20,8 +20,17 @@ import { join } from 'node:path';
 const RACINE = join(__dirname, '..');
 const PREUVES = join(RACINE, 'docs', 'evidence');
 
+/**
+ * Motifs de secret.
+ *
+ * `sk-` doit être précédé d'une frontière (`(?<![A-Za-z0-9_-])`) : sinon le
+ * nom d'outil `ask-clarification` — que le serveur MCP expose — était pris
+ * pour une clé, et le paquet de preuves du 13/11 était refusé alors qu'il ne
+ * contenait aucun secret. La frontière n'affecte pas la détection d'une
+ * vraie clé (`sk-…` collée à un espace, une quote ou début de ligne).
+ */
 const MOTIFS_SECRET =
-  /(ghp_[A-Za-z0-9]{36}|sk-[A-Za-z0-9_-]{24,}|sk_[a-f0-9]{32}|AKIA[0-9A-Z]{16}|BEGIN [A-Z ]*PRIVATE KEY)/;
+  /(?<![A-Za-z0-9_-])(ghp_[A-Za-z0-9]{36}|sk-[A-Za-z0-9_-]{24,}|sk_[a-f0-9]{32}|AKIA[0-9A-Z]{16}|BEGIN [A-Z ]*PRIVATE KEY)/;
 
 /** Les dix items du cahier des charges, dans l'ordre. */
 const ITEMS = [
@@ -119,6 +128,16 @@ describe('paquet de preuves', () => {
         }
       }
     }
+  });
+
+  it('le motif de secret détecte une vraie clé, et pas un nom d’outil', () => {
+    const vraieCle = 'sk-' + 'a'.repeat(30);
+    expect(MOTIFS_SECRET.test(`clé : ${vraieCle}`)).toBe(true);
+    expect(MOTIFS_SECRET.test('ghp_' + 'b'.repeat(36))).toBe(true);
+    expect(MOTIFS_SECRET.test('AKIA' + 'C'.repeat(16))).toBe(true);
+    // Le nom d'outil exposé par le serveur MCP n'est pas une clé.
+    expect(MOTIFS_SECRET.test('ask-clarification_development')).toBe(false);
+    expect(MOTIFS_SECRET.test('task-abcdefghijklmnopqrstuvwxyz012345')).toBe(false);
   });
 
   it('chaque étape est référencée dans l’index de son paquet', () => {

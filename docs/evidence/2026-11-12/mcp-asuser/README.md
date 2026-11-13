@@ -1,5 +1,22 @@
 # Étape — le chemin `asUser` : ce qui a été tenté, et ce qui bloque
 
+> **⚠️ Diagnostic corrigé le 13 novembre.** La conclusion de cette étape —
+> « bloqué par l'état du tenant », l'app « Not sharing » étant la cause
+> racine — **est fausse**. Elle a été vérifiée fausse : le chemin `asUser`
+> fonctionne, en production, sur des données réelles. La suite du raisonnement
+> est dans [`2026-11-13/mcp-asuser/`](../2026-11-13/mcp-asuser/) :
+> - l'exposition MCP se règle **par installation** (Administration du site →
+>   Connected apps → l'app → Data management), pas dans la console
+>   développeur ;
+> - le garde lisait le ticket en *impersonation hors ligne*
+>   (`api.asUser(accountId)`), que la plateforme refuse sans scope
+>   `allowImpersonation` — d'où un refus pour **tous** les tickets ;
+> - les tables SQL n'avaient jamais été créées, donc toute requête échouait.
+>
+> Ce qui suit est **conservé tel quel** : c'est l'état de la connaissance au
+> 12 novembre, et c'est ce qui a conduit au faux diagnostic.
+
+
 ## Ce que ça prouve
 
 J'ai poussé la recherche jusqu'au bout, **avec ton navigateur** (le Chrome
