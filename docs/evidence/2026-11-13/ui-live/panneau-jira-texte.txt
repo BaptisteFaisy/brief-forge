@@ -1,0 +1,170 @@
+# Provenance
+- Date : 2026-11-13 21:27:21 CET
+- Commande : lecture du texte rendu dans Chrome (CDP), sur le site de démo
+- Page : texte rendu du panneau Jira (PAY-220), installation production, onglet déplié
+- Dépôt : brief-forge @ a7f5ee5
+
+Skip to:
+Top Bar
+Sidebar
+Main Content
+Collapse sidebar
+Switch sites or apps
+Jira
+Press enter to navigate to advanced search with your text query
+Connect apps
+Create
+Ask Rovo
+8 Notifications
+8
+Help
+Settings
+baptiste.faisy@gmail.com
+For you
+Recent
+Starred
+Apps
+More actions for Apps
+Roadmaps
+Create roadmap
+Plans
+Create plan
+More actions for Plans
+Spaces
+Create space
+More actions for spaces
+
+Recent
+
+Paiements
+Create board
+More actions for Paiements
+Chantiers en collision (demo)
+Create board
+More actions for Chantiers en collision (demo)
+Déjà-vu CI (memory)
+Create board
+More actions for Déjà-vu CI (memory)
+Security Operations
+More actions for Security Operations
+Merge avec contexte
+Create board
+More actions for Merge avec contexte
+More spaces
+Import work
+Filters
+Dashboards
+Create dashboard
+Operations
+More actions for Operations
+Hardware
+New
+Customers
+Customer experiences
+Create experience
+Help centers
+Modern
+Confluence
+, (opens new window)
+Assets
+, (opens new window)
+Teams
+, (opens new window)
+Teams
+Goals
+, (opens new window)
+Projects
+, (opens new window)
+Customize sidebar
+Resize panel
+Spaces
+Paiements
+PAY-220
+[perf] Settlement batch item 200
+Add or create work related to this Task
+View app actions
+Summarize work item
+Description
+Add a description...
+Collapse Attachments
+Attachments
+Add attachment
+Create project plan
+Try
+Subtasks
+Add subtask
+Linked work items
+Add linked work item
+Agent sessions
+Uses AI. Verify results.
+, (opens new window)
+Start work
+Activity
+All
+Comments
+History
+Work log
+Approvals
+Newest first
+Add a comment…
+Can I get more info...?
+Status update...
+Thanks...
+Pro tip: press 
+M
+ to comment
+Resize work item view side panel
+1
+Share
+Actions
+To Do
+Agents
+Open in coding tool
+Automation
+Improve Task
+Details
+Assignee
+Baptiste Faisy
+Reporter
+Baptiste Faisy
+Labels
+Add labels
+Due date
+Add due date
+Priority
+Critical
+Development
+More fields
+Original estimate, Time tracking, Components, Team, Parent
+Automation
+Rule executions
+Brief de contexte 
+DEV
+Préparation
+Préparation 39/100
+Brief de contexte
+Préparation
+Préparation 39/100
+Debt evidence
+L'addition
+Déjà-vu CI
+Déjà-vu CI
+Merge avec contexte
+Merge avec contexte
+Merge avec contexte 
+DEV
+Merge avec contexte
+Rayon d'impact
+Impact
+Rayon d'impact 
+DEV
+Impact
+Ce que ce bug coûte
+Problèmes cachés
+Ce que ce bug coûte 
+DEV
+Problèmes cachés
+Created 2 days ago
+Updated 2 days ago
+Configure
+Open Rovo Chat

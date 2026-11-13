@@ -25,7 +25,7 @@ async function optional<T>(load: () => Promise<T>, fallback: T): Promise<T> {
 }
 
 /** Calcul complet : ticket, réglages projet, décisions et tentatives. */
-async function computeFresh(issueKey: string): Promise<ReadinessScore> {
+export async function computeFresh(issueKey: string): Promise<ReadinessScore> {
   const issue = await collectIssue(issueKey);
   const settings = await resolveSettings(issue.projectKey);
   const [decisions, attempts] = await Promise.all([
@@ -40,7 +40,7 @@ async function computeFresh(issueKey: string): Promise<ReadinessScore> {
 }
 
 /** Calcule puis enregistre le score ; une écriture ratée ne bloque pas la réponse. */
-async function computeAndStore(issueKey: string): Promise<ReadinessScore> {
+export async function computeAndStore(issueKey: string): Promise<ReadinessScore> {
   const score = await computeFresh(issueKey);
   try {
     await saveReadiness(score, isoNow());

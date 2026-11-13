@@ -1,0 +1,183 @@
+# Provenance
+- Date : 2026-11-13 21:27:21 CET
+- Commande : lecture du texte rendu dans Chrome (CDP), sur le site de démo
+- Page : texte rendu de l'écran « Travail des agents » (projet PAY), installation production
+- Dépôt : brief-forge @ a7f5ee5
+
+Skip to:
+Top Bar
+Sidebar
+Main Content
+Space navigation
+Collapse sidebar
+Switch sites or apps
+Jira
+Press enter to navigate to advanced search with your text query
+Connect apps
+Create
+Ask Rovo
+8 Notifications
+8
+Help
+Settings
+baptiste.faisy@gmail.com
+For you
+Recent
+Starred
+Apps
+More actions for Apps
+Roadmaps
+Create roadmap
+Plans
+Create plan
+More actions for Plans
+Spaces
+Create space
+More actions for spaces
+
+Recent
+
+Paiements
+Create board
+More actions for Paiements
+Chantiers en collision (demo)
+Create board
+More actions for Chantiers en collision (demo)
+Déjà-vu CI (memory)
+Create board
+More actions for Déjà-vu CI (memory)
+Security Operations
+More actions for Security Operations
+Merge avec contexte
+Create board
+More actions for Merge avec contexte
+More spaces
+Import work
+Filters
+Dashboards
+Create dashboard
+Operations
+More actions for Operations
+Hardware
+New
+Customers
+Customer experiences
+Create experience
+Help centers
+Modern
+Confluence
+, (opens new window)
+Assets
+, (opens new window)
+Teams
+, (opens new window)
+Teams
+Goals
+, (opens new window)
+Projects
+, (opens new window)
+Customize sidebar
+Resize panel
+Spaces
+Paiements
+Give feedback
+Enter full screen
+Summary
+More actions for Summary
+Reports
+More actions for Reports
+List
+More actions for List
+Forms
+More actions for Forms
+Goals
+More actions for Goals
+Components
+More actions for Components
+Development
+More actions for Development
+Releases
+More actions for Releases
+Travail des agents
+More actions for Travail des agents
+More
+9+
+Travail des agents
+Travail des agents — PAY
+EN
+Comptes rendus confirmés sans correction
+— données insuffisantes
+
+sur 0 comptes rendus relus
+
+Clarifications demandées plutôt que devinées
+— données insuffisantes
+
+sur 0 incertitudes : questions posées ou hypothèses prises
+
+Tentatives répétées évitées
+0
+
+sur 0 tickets dont le brief a été servi
+
+Manques les plus fréquents du projet
+
+Composant identifié — 1 ticket(s)
+
+Critères d’acceptation vérifiables — 1 ticket(s)
+
+Objectif écrit — 1 ticket(s)
+
+Périmètre borné — 1 ticket(s)
+
+Tickets prêts
+
+PROJ-130 — Export des logs d'audit vers S3 avec chiffrement KMS
+
+Tickets prêts
+
+Préparation 85 / 100
+
+PROJ-129 — Validation du format de clé API dans le dialogue de configuration
+
+Tickets prêts
+
+Préparation 75 / 100
+
+En cours
+
+PROJ-128 — Synchronisation des déploiements GitHub Actions
+
+En cours
+
+Préparation 45 / 100
+
+Agent : Claude Code (v1.2)
+
+Rendus
+
+PROJ-127 — Refactor du pool SQL Forge pour réutiliser les connexions
+
+Rendus
+
+Préparation 80 / 100
+
+Agent : Cursor Agent
+
+Dernier compte rendu : Compte rendu déposé sans tests unitaires (att-002)
+
+non vérifié par des tests
+
+Ce compte rendu n'a pas été vérifié par des tests : relisez-le avant de fusionner.
+
+PROJ-124 — Ajout de la télémétrie des tokens consommés par prompt
+
+Rendus
+
+Préparation 90 / 100
+
+Agent : Aider agent
+
+Dernier compte rendu : 6 tests passés, critères 1 et 2 validés
+
+Open Rovo Chat

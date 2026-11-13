@@ -344,9 +344,21 @@ function runSelfTest(opts) {
   else ko('liste fidèle au manifeste : le comparateur signale des écarts à tort.');
   if (result.brokenDetected) ok(`liste abîmée : ${result.brokenDiffs.length} écart(s) détecté(s), comme attendu.`);
   else ko('liste abîmée : aucun écart détecté — le comparateur est aveugle.');
+  if (result.installationsOk) {
+    ok('même app sur deux installations : les outils suffixés par l’environnement ne sont pas des écarts.');
+  } else {
+    ko('même app sur deux installations : les outils suffixés par l’environnement sont pris pour des écarts.');
+  }
+  if (result.strangerDetected) ok('outil inconnu : l’écart est bien détecté.');
+  else ko('outil inconnu : aucun écart détecté — le comparateur accepte n’importe quoi.');
   if (manifest.mcpTools.length === EXPECTED_TOOL_COUNT) ok(`${EXPECTED_TOOL_COUNT} outils exposés, comme le contrat l’exige.`);
   else ko(`le manifeste expose ${manifest.mcpTools.length} outils, le contrat en exige ${EXPECTED_TOOL_COUNT}.`);
-  const passed = result.cleanOk && result.brokenDetected && manifest.mcpTools.length === EXPECTED_TOOL_COUNT;
+  const passed =
+    result.cleanOk &&
+    result.brokenDetected &&
+    result.installationsOk &&
+    result.strangerDetected &&
+    manifest.mcpTools.length === EXPECTED_TOOL_COUNT;
   return passed ? EXIT_OK : EXIT_TECH;
 }
 

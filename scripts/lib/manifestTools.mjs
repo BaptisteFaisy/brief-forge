@@ -109,21 +109,47 @@ function compareInputs(action, tool) {
   return diffs;
 }
 
+/**
+ * Suffixe d'environnement ajouté par Atlassian quand la **même app** est
+ * installée plusieurs fois sur un site (typiquement `development` et
+ * `production`) : le serveur MCP expose alors `get-work-brief` **et**
+ * `get-work-brief_development`. Ce ne sont pas des outils en écart — ce sont
+ * les mêmes outils, sur une autre installation.
+ *
+ * Constaté sur le site de démo le 13/11 : `tools/list` renvoyait 22 outils
+ * (11 par installation), et le comparateur les-traitait comme 11 outils
+ * « absents du manifeste » — un faux positif qui rendait le verdict
+ * illisible.
+ */
+const ENVIRONNEMENT_SUFFIX = /^(.*)_(development|staging|production)$/;
+
+/**
+ * Nom d'outil ramené à sa clé de manifeste, ou `null` si le nom ne
+ * correspond à aucun des deux schémas attendus.
+ */
+export function cleOutil(nom, actions) {
+  if (actions.includes(nom)) return nom;
+  const suffixe = nom.match(ENVIRONNEMENT_SUFFIX);
+  if (suffixe && actions.includes(suffixe[1])) return suffixe[1];
+  return null;
+}
+
 /** Écarts entre le manifeste et `tools/list` (noms, puis schémas d'entrées). */
 export function compareTools(tools, manifest) {
   const declared = manifest.actions.map((action) => action.key);
   const exposed = tools.map((tool) => tool.name);
   const diffs = [];
   for (const name of manifest.mcpTools) {
-    if (!exposed.includes(name)) {
+    const present = exposed.some((candidat) => cleOutil(candidat, declared) === name);
+    if (!present) {
       diffs.push({ tool: name, problem: 'outil déclaré dans le module `rovo:mcp` mais absent de `tools/list`' });
     }
   }
   for (const name of exposed) {
-    if (!declared.includes(name)) diffs.push({ tool: name, problem: 'outil exposé mais absent du manifeste' });
+    if (cleOutil(name, declared) === null) diffs.push({ tool: name, problem: 'outil exposé mais absent du manifeste' });
   }
   for (const action of manifest.actions) {
-    const tool = tools.find((candidate) => candidate.name === action.key);
+    const tool = tools.find((candidate) => cleOutil(candidate.name, declared) === action.key);
     if (tool) diffs.push(...compareInputs(action, tool));
   }
   return { declared, exposed, diffs, ok: diffs.length === 0 };
@@ -132,8 +158,10 @@ export function compareTools(tools, manifest) {
 export function printComparison(report) {
   step('Outils exposés par le serveur');
   for (const name of report.exposed) {
-    const known = report.declared.includes(name);
-    line(`  ${known ? '✓' : '✗'} ${name}${known ? '' : '  (absent du manifeste)'}`);
+    const cle = cleOutil(name, report.declared);
+    const suffixe = name.match(ENVIRONNEMENT_SUFFIX);
+    const mention = cle === null ? '  (absent du manifeste)' : suffixe ? `  (installation ${suffixe[2]})` : '';
+    line(`  ${cle === null ? '✗' : '✓'} ${name}${mention}`);
   }
   step(`Comparaison avec les ${report.declared.length} actions du manifeste`);
   if (report.ok) {
@@ -170,10 +198,24 @@ export function selfTestCompare(manifest) {
     index === 0 ? { ...tool, inputSchema: { ...tool.inputSchema, required: [] } } : tool
   );
   const detected = compareTools(broken, manifest);
+  // Même app installée sur deux environnements : Atlassian suffixe les
+  // outils du second. Ce ne doit pas compter comme un écart…
+  const doubled = [
+    ...faithful,
+    ...faithful.map((tool) => ({ ...tool, name: `${tool.name}_development` })),
+  ];
+  const withInstallations = compareTools(doubled, manifest);
+  // …mais un outil qui ne correspond à rien reste un écart.
+  const stranger = compareTools(
+    [...faithful, { name: 'outil-inconnu', inputSchema: { type: 'object', properties: {} } }],
+    manifest
+  );
   return {
     toolCount: faithful.length,
     cleanOk: clean.ok,
     brokenDetected: !detected.ok,
     brokenDiffs: detected.diffs,
+    installationsOk: withInstallations.ok,
+    strangerDetected: !stranger.ok,
   };
 }
