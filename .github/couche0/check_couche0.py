@@ -47,7 +47,11 @@ FORBIDDEN_PATTERNS = [
     (r"--force(?!-with-lease)\b", "push forcé sans --force-with-lease",
      "modal secret create"),  # faux positif : écrasement idempotent du secret Modal
     (r"pull_request_target", "déclencheur à privilèges pull_request_target", None),
-    (r"sk-[A-Za-z0-9_\-]{24,}", "clé API sk-… en clair", None),
+    # `sk-` doit être précédé d'une frontière : sans elle, le nom d'outil
+    # `ask-clarification` — que le serveur MCP d'Atlassian expose — était
+    # pris pour une clé en clair, et le paquet de preuves du 13/11 était
+    # refusé alors qu'il ne contenait aucun secret (constaté le 13/11).
+    (r"(?<![A-Za-z0-9_\-])sk-[A-Za-z0-9_\-]{24,}", "clé API sk-… en clair", None),
     (r"sk_[a-f0-9]{32}", "clé API sk_… en clair", None),
     (r"ghp_[A-Za-z0-9]{36}", "jeton GitHub ghp_… en clair", None),
     (r"^sdk\.dir=", "sdk.dir en dur (local.properties ne se versionne pas)", None),
