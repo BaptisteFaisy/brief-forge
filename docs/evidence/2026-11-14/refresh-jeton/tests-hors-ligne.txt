@@ -1,0 +1,28 @@
+# Provenance
+- Date : 2026-11-14 14:45:51 CET
+- Commande : `npx jest test/scripts --silent` puis `node test/scripts/harnais-token-store.mjs`
+- Dépôt : brief-forge @ c987fb1
+
+$ npx jest test/scripts --silent
+PASS test/scripts/mcpE2e.test.ts
+PASS test/scripts/tokenStore.test.ts
+PASS test/scripts/demoSeed.test.ts
+
+Test Suites: 3 passed, 3 total
+Tests:       48 passed, 48 total
+Snapshots:   0 total
+Time:        5.665 s
+
+$ node test/scripts/harnais-token-store.mjs
+jeton d’il y a 9 h : expiré -> true
+renouvelable : donne la commande -> true
+non renouvelable : dit le consentement, jamais un faux --refresh -> true
+marge d’expiration : alerte et commande -> true
+fichier écrit en 0600 -> true
+relecture fidèle à l’écriture -> true
+fichier absent -> null -> true
+texte vide -> null -> true
+jeton brut accepté -> true
+JSON brisé : aucun jeton, aucune exception -> true
+fichier terminé par un saut de ligne -> true
+OK

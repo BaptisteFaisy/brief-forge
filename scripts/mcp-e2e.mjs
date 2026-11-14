@@ -67,6 +67,7 @@ import {
   technical,
   truncate,
 } from './lib/output.mjs';
+import { alerteJeton, corpsRefresh, lireJetonStocke } from './lib/tokenStore.mjs';
 
 const DEFAULT_APP_ID = '08a89a5d-94d0-448f-8c1a-70f938b2c3a8';
 const DEFAULT_TIMEOUT_MS = 20000;
@@ -188,36 +189,38 @@ function printUsage() {
 }
 
 /**
- * Le jeton ne vient que de l'environnement ou d'un fichier hors dépôt.
- *
- * `scripts/mcp-login.mjs` enregistre la **réponse complète** du serveur
- * d'autorisation (`{ access_token, refresh_token, scope, … }`) : un fichier de
- * ce type est donc du JSON, pas un jeton brut. On accepte les deux formes, et
- * on ne remonte jamais le contenu du fichier dans un message d'erreur — un
- * jeton dans une sortie, c'est une fuite.
+ * Le jeton ne vient que de l'environnement ou d'un fichier hors dépôt. La forme
+ * du fichier (JSON de la réponse d'autorisation, ou jeton brut) est lue par la
+ * règle partagée `lireJetonStocke` ; son contenu ne remonte jamais dans un
+ * message — un jeton dans une sortie, c'est une fuite.
  */
-function lireJetonOuBrut(raw, source) {
-  const texte = (raw || '').trim();
-  if (texte === '') return '';
-  if (!texte.startsWith('{')) return texte;
-  try {
-    return (JSON.parse(texte).access_token || '').trim();
-  } catch {
-    return '';
-  }
-}
-
 function readToken(opts) {
   if (opts.tokenFile) {
-    const token = lireJetonOuBrut(readFileSync(resolve(opts.tokenFile), 'utf8'), opts.tokenFile);
+    const stocke = lireJetonStocke(resolve(opts.tokenFile));
+    const token = String((stocke && stocke.access_token) || '').trim();
     if (token === '') {
       usageError(`aucun jeton exploitable dans ${opts.tokenFile} (attendu : jeton brut ou JSON avec « access_token »)`);
     }
+    refuserJetonPerime(stocke, opts.tokenFile);
     return { token, source: `le fichier ${opts.tokenFile}` };
   }
   const fromEnv = (process.env.MCP_TOKEN || '').trim();
   if (fromEnv !== '') return { token: fromEnv, source: 'la variable d’environnement MCP_TOKEN' };
   return null;
+}
+
+/**
+ * Écarter un jeton périmé avant d'appeler : un 401 compris n'est pas un 401
+ * subi (« le chemin asUser est cassé ») — l'erreur du 12 novembre, payée une
+ * journée. Code 1 si le fichier permet de se renouveler sans humain, 2 sinon.
+ * Un jeton non daté n'est pas jugé : la preuve reste un appel réel.
+ */
+function refuserJetonPerime(stocke, chemin) {
+  const alerte = alerteJeton(stocke, Date.now());
+  if (alerte === '') return;
+  line('');
+  const message = `${alerte} — fichier ${chemin}`;
+  process.exit(corpsRefresh(stocke) ? technical(message) : blocked(message));
 }
 
 /* ------------------------------------------------------------------ */

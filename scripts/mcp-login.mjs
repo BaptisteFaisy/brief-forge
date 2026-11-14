@@ -14,11 +14,16 @@
  *
  * Usage :
  *   node scripts/mcp-login.mjs [--app-id <uuid>] [--out <fichier>]
+ *   node scripts/mcp-login.mjs --refresh   # renouveler sans navigateur
+ *
+ * `--refresh` n'exige ni navigateur ni consentement : il lui faut un fichier
+ * portant `refresh_token` **et** `client_id`, ce que cette version persiste
+ * désormais (voir `scripts/lib/tokenStore.mjs`).
  *
  * Sans dépendance npm : `fetch`, `node:crypto`, `node:http` et `node:fs`.
  */
 import { createServer } from 'node:http';
-import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { dirname } from 'node:path';
 
 import {
@@ -30,6 +35,13 @@ import {
   randomState,
   resourceMetadataUrl,
 } from './lib/mcpClient.mjs';
+import {
+  corpsRefresh,
+  ecrireJetonStocke,
+  jetonPersiste,
+  lireJetonStocke,
+  motifNonRenouvelable,
+} from './lib/tokenStore.mjs';
 
 const DEFAUT_JETON = `${process.env.HOME}/.config/brief-forge/mcp.token`;
 
@@ -139,7 +151,7 @@ async function enregistrerClient(registrationEndpoint, redirectUri) {
   return JSON.parse(texte);
 }
 
-/** Échange le code contre un jeton. */
+/** POST au point d'accès aux jetons : échange d'un code, ou renouvellement. */
 async function echangerCode(tokenEndpoint, corps) {
   const reponse = await fetch(tokenEndpoint, {
     method: 'POST',
@@ -153,12 +165,8 @@ async function echangerCode(tokenEndpoint, corps) {
   return JSON.parse(texte);
 }
 
-async function main() {
-  const options = args(process.argv.slice(2));
-  const appId = options['app-id'] || '08a89a5d-94d0-448f-8c1a-70f938b2c3a8';
-  const sortie = options.out || DEFAUT_JETON;
-  const endpoint = endpointFor(appId, options.endpoint || '');
-
+/** Découverte OAuth : métadonnées de la ressource, puis du serveur d'autorisation. */
+async function decouvrir(endpoint) {
   const ressource = await firstReadable(
     [
       resourceMetadataUrl('', endpoint),
@@ -168,28 +176,42 @@ async function main() {
   );
   if (!ressource) throw new Error('métadonnées de la ressource introuvables');
   const serveur = ressource.json;
-  const autorisation = serveur.authorization_servers[0];
-  const metadonnees = await firstReadable(asMetadataCandidates(autorisation), 20000);
+  const metadonnees = await firstReadable(
+    asMetadataCandidates(serveur.authorization_servers[0]),
+    20000
+  );
   if (!metadonnees) throw new Error('métadonnées du serveur d’autorisation introuvables');
-  const as = metadonnees.json;
+  return { serveur, as: metadonnees.json };
+}
 
+/** URL de consentement : PKCE, périmètre publié par la ressource, ciblage `resource`. */
+function urlConsentement(as, serveur, endpoint, client, redirection, challenge) {
+  const url = new URL(as.authorization_endpoint);
+  url.searchParams.set('response_type', 'code');
+  url.searchParams.set('client_id', client.client_id);
+  url.searchParams.set('redirect_uri', redirection);
+  url.searchParams.set('code_challenge', challenge);
+  url.searchParams.set('code_challenge_method', 'S256');
+  url.searchParams.set('scope', (serveur.scopes_supported || []).join(' '));
+  url.searchParams.set('resource', endpoint);
+  url.searchParams.set('state', randomState());
+  return url.toString();
+}
+
+/**
+ * Chemin normal : enregistrement dynamique du client, consentement dans le
+ * navigateur de l'utilisateur, échange du code. Le `client_id` est conservé
+ * avec le jeton — sans lui, le jeton suivant serait lui aussi irrécupérable.
+ */
+async function connecter(endpoint, sortie) {
+  const { serveur, as } = await decouvrir(endpoint);
   const { code: attente, port, close } = await demarrerServeur();
   const redirection = `http://127.0.0.1:${port}/callback`;
   const client = await enregistrerClient(as.registration_endpoint, redirection);
-
   const { verifier, challenge } = pkcePair();
-  const autorisationUrl = new URL(as.authorization_endpoint);
-  autorisationUrl.searchParams.set('response_type', 'code');
-  autorisationUrl.searchParams.set('client_id', client.client_id);
-  autorisationUrl.searchParams.set('redirect_uri', redirection);
-  autorisationUrl.searchParams.set('code_challenge', challenge);
-  autorisationUrl.searchParams.set('code_challenge_method', 'S256');
-  autorisationUrl.searchParams.set('scope', (serveur.scopes_supported || []).join(' '));
-  autorisationUrl.searchParams.set('resource', endpoint);
-  autorisationUrl.searchParams.set('state', randomState());
 
   console.log('\n== Ouvre cette URL dans ton navigateur et accepte le consentement ==\n');
-  console.log(autorisationUrl.toString());
+  console.log(urlConsentement(as, serveur, endpoint, client, redirection, challenge));
   console.log('\n(le script attend le retour ; aucune saisie de mot de passe ici)\n');
 
   const fichierAttente = `${process.env.HOME}/.config/brief-forge/code.pending`;
@@ -204,7 +226,7 @@ async function main() {
     attendreCodeAlternatif(fichierAttente, 15 * 60 * 1000),
   ]);
   close();
-  const jeton = await echangerCode(as.token_endpoint, {
+  const brut = await echangerCode(as.token_endpoint, {
     grant_type: 'authorization_code',
     code,
     code_verifier: verifier,
@@ -212,11 +234,45 @@ async function main() {
     redirect_uri: redirection,
     resource: endpoint,
   });
+  const jeton = jetonPersiste(brut, { clientId: client.client_id, resource: endpoint });
+  ecrireJetonStocke(sortie, jeton);
+  console.log(
+    `jeton enregistré dans ${sortie} (0600) — expires_in ${jeton.expires_in}s, ` +
+      'client_id conservé : renouvellement possible sans navigateur (--refresh)'
+  );
+}
 
-  mkdirSync(dirname(sortie), { recursive: true });
-  writeFileSync(sortie, JSON.stringify(jeton, null, 1), { mode: 0o600 });
-  chmodSync(sortie, 0o600);
-  console.log(`jeton enregistré dans ${sortie} (0600) — expires_in : ${jeton.expires_in}s`);
+/**
+ * Renouvellement : aucun navigateur, aucun consentement — le `refresh_token`
+ * et le `client_id` stockés suffisent. C'est ce qui rend les preuves asUser
+ * rejouables au-delà de 8 h, sans redemander un clic à l'utilisateur.
+ */
+async function rafraichir(endpoint, sortie) {
+  const stocke = lireJetonStocke(sortie);
+  if (!stocke) {
+    throw new Error(`aucun jeton dans ${sortie} : joue d'abord node scripts/mcp-login.mjs`);
+  }
+  const corps = corpsRefresh(stocke, endpoint);
+  if (!corps) throw new Error(motifNonRenouvelable(stocke));
+  const { as } = await decouvrir(endpoint);
+  const brut = await echangerCode(as.token_endpoint, corps);
+  const jeton = jetonPersiste(brut, { clientId: stocke.client_id, resource: endpoint });
+  // Le serveur ne renvoie pas toujours un nouveau refresh_token : on garde l'ancien.
+  if (!jeton.refresh_token) jeton.refresh_token = stocke.refresh_token;
+  ecrireJetonStocke(sortie, jeton);
+  const scopes = (jeton.scope || stocke.scope || '').split(' ').filter(Boolean).length;
+  console.log(
+    `jeton renouvelé dans ${sortie} (0600) — expires_in ${jeton.expires_in}s, ${scopes} scopes`
+  );
+}
+
+async function main() {
+  const options = args(process.argv.slice(2));
+  const appId = options['app-id'] || '08a89a5d-94d0-448f-8c1a-70f938b2c3a8';
+  const sortie = options.out || DEFAUT_JETON;
+  const endpoint = endpointFor(appId, options.endpoint || '');
+  if (options.refresh) return rafraichir(endpoint, sortie);
+  return connecter(endpoint, sortie);
 }
 
 main().catch((erreur) => {

@@ -13,7 +13,7 @@ import { join } from 'node:path';
 const ROOT = join(__dirname, '..', '..');
 const SCRIPT = join('scripts', 'mcp-e2e.mjs');
 const LIB_DIR = join('scripts', 'lib');
-const LIBS = ['http.mjs', 'output.mjs', 'mcpClient.mjs', 'manifestTools.mjs', 'briefChecks.mjs'];
+const LIBS = ['http.mjs', 'output.mjs', 'mcpClient.mjs', 'manifestTools.mjs', 'briefChecks.mjs', 'tokenStore.mjs'];
 
 /** Lance le script avec un environnement privé de tout jeton. */
 function run(args: string[], env: Record<string, string> = {}) {
