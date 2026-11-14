@@ -1,0 +1,24 @@
+# Provenance
+- Date : 2026-11-14 14:45:08 CET
+- Commande : `node scripts/mcp-e2e.mjs --run --issue PAY-220 --token-file <fichier fabliqué>`
+- Dépôt : brief-forge @ c987fb1
+
+--- jeton fabriqué : perime-sans-client.json
+brief-forge — test de bout en bout du serveur MCP
+
+
+── BLOQUÉ — une étape humaine est requise
+  ✗ jeton expiré depuis 3600 s — renouvellement impossible : client_id absent du fichier. Un jeton obtenu avant la persistance du client ne peut pas être rafraîchi : le consentement doit être rejoué (node scripts/mcp-login.mjs). — fichier /tmp/tmp.l5BuiZOcCT/perime-sans-client.json
+
+  Dans l’ordre, voici ce qui ne peut pas être fait par ce script :
+    1. activation de l'exposition externe par un administrateur : Administration Atlassian → Apps → Sites → <site>.atlassian.net → Connected apps → « Brief de contexte »
+    2. consentement OAuth 2.1 dans un navigateur (code d’autorisation + PKCE) : le jeton utilisateur ne peut pas être obtenu sans écran
+    3. transmission du jeton au script : export MCP_TOKEN=… (ou --token-file ~/secrets/bf-mcp.token, hors du dépôt)
+(code de sortie : 2)
+
+--- jeton fabriqué : perime-avec-client.json
+brief-forge — test de bout en bout du serveur MCP
+
+  ✗ jeton expiré depuis 3600 s — renouvelez : node scripts/mcp-login.mjs --refresh — fichier /tmp/tmp.l5BuiZOcCT/perime-avec-client.json
+(code de sortie : 1)
+

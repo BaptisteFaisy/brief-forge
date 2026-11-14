@@ -1,0 +1,12 @@
+# Provenance
+- Date : 2026-11-14 14:45:08 CET
+- Commande : `node scripts/mcp-login.mjs --refresh --out ~/.config/brief-forge/mcp.token`
+- Dépôt : brief-forge @ c987fb1
+
+$ python3 -c "import json,os;print(sorted(json.load(open(os.path.expanduser('~/.config/brief-forge/mcp.token')))))"
+['access_token', 'expires_in', 'refresh_token', 'scope', 'token_type']
+
+$ node scripts/mcp-login.mjs --refresh --out ~/.config/brief-forge/mcp.token
+ÉCHEC : renouvellement impossible : client_id absent du fichier. Un jeton obtenu avant la persistance du client ne peut pas être rafraîchi : le consentement doit être rejoué (node scripts/mcp-login.mjs).
+
+(code de sortie : 1)

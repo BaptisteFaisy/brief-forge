@@ -147,6 +147,27 @@ Garde-fous vérifiés par `test/scripts/mcpE2e.test.ts` :
 - aucun fichier du dépôt ne contient de jeton (contrôle des motifs `ghp_…`,
   `sk-…`, `sk_…`).
 
+### Durée de vie et renouvellement (14 novembre 2026)
+
+Le jeton utilisateur dure **8 h**, annoncée par le serveur. Un fichier écrit
+par `scripts/mcp-login.mjs` porte désormais, en plus du jeton : `client_id` (le
+client enregistré en RFC 7591), `resource`, `obtenu_a`, `expire_a`. Ces quatre
+pièces sont ce qui rend le jeton renouvelable — sans `client_id`, RFC 6749 § 6
+interdit d'utiliser un `refresh_token`, et le consentement doit être rejoué. Le
+fichier du 13 novembre était dans cet état : constat dans
+[`docs/evidence/2026-11-14/refresh-jeton/`](evidence/2026-11-14/refresh-jeton/).
+
+```bash
+node scripts/mcp-login.mjs --refresh   # ni navigateur, ni consentement
+```
+
+`scripts/mcp-e2e.mjs` écarte un jeton **périmé avant tout appel réseau** : code
+de sortie `1` s'il est renouvelable (la commande ci-dessus est alors imprimée),
+`2` si un consentement neuf est requis. Un jeton sans horodatage (brut, ou
+écrit avant cette version) n'est pas jugé — la preuve reste un appel réel, pas
+une supposition. Règles vérifiées par `test/scripts/tokenStore.test.ts` et son
+harnais `test/scripts/harnais-token-store.mjs`.
+
 ---
 
 ## 4. Auto-contrôle hors ligne : `--selftest`

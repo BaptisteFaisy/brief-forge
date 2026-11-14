@@ -7,6 +7,7 @@ Chaque paquet contient une étape par action, avec la sortie brute de la mesure.
 |---|---|---|
 | [`2026-11-12`](2026-11-12/) | Session du 12 novembre 2026 : déploiements, trigger planifié, serveur MCP, modèle Forge, langue du brief, banc InferHub, démontage de la sonde | [README](2026-11-12/README.md) |
 | [`2026-11-13`](2026-11-13/) | Session du 13 novembre 2026 : le chemin `asUser` réellement débloqué (le diagnostic du 12 était faux), exposition MCP activée par installation, deux bugs corrigés | [README](2026-11-13/README.md) |
+| [`2026-11-14`](2026-11-14/) | Session du 14 novembre 2026 : le jeton `asUser` rendu renouvelable — et une affirmation fausse du paquet du 13 corrigée | [README](2026-11-14/README.md) |
 
 Artefacts antérieurs à la convention :
 

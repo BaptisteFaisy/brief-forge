@@ -99,4 +99,13 @@ node scripts/mcp-e2e.mjs --selftest
 ```
 
 Le jeton vit dans `~/.config/brief-forge/mcp.token` (`0600`), **hors du
-dépôt**. Il expire en 8 h ; `refresh_token` permet de le renouveler.
+dépôt**. Il expire en 8 h.
+
+> **⚠️ Corrigé le 14 novembre.** La phrase qui suivait — « `refresh_token`
+> permet de le renouveler » — était **fausse** : le fichier ne portait aucun
+> `client_id` (issu d'un enregistrement dynamique jeté à chaque exécution), et
+> sans lui RFC 6749 § 6 interdit d'utiliser un `refresh_token`. Le jeton du
+> 13/11 est donc irrécupérable, et cette étape n'était pas rejouable au-delà de
+> 8 h. Constat chiffré et correctif (magasin de jetons, `--refresh`, jeton
+> périmé écarté avant l'appel) dans
+> [`2026-11-14/refresh-jeton/`](../2026-11-14/refresh-jeton/).
