@@ -37,6 +37,16 @@ duplication. C'est ce qui rend la capture possible, et c'est aussi ce qui
 rend l'encart fiable : un panneau incapable de calculer ce qu'il affiche
 n'est pas trustworthy.
 
+> **Précision sur la provenance (ajoutée le 14 novembre).** Les deux artefacts
+> portent `Dépôt : brief-forge @ a7f5ee5`, qui était bien le SHA de `main` à
+> l'instant de la capture (21:27:21 CET). Mais le calcul du score à la demande
+> — ce qui rend la capture possible — n'était **pas encore commité** : il vivait
+> dans l'arbre de travail dont le déploiement `production` (21:10:12 CET) avait
+> été fait. Il est entré dans `main` sous `a48c84c` (commité 21:30:49, mergé
+> 21:49:09). Ces artefacts sont donc reproductibles à partir de `a48c84c`, pas
+> de `a7f5ee5` : un artefact dont le SHA ne désigne pas le code qui l'a produit
+> doit le dire, sinon « rejouer » trompe un lecteur.
+
 ## Ce que ça ne prouve pas
 
 - **Que le brief s'affiche dans l'encart.** L'encart montre le score, le
